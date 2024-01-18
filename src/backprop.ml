@@ -9,16 +9,20 @@ type ('a, 'b) arr = ('a -> 'b * ('b -> 'a))
 (** A pure value. *)
 let return x : 'a t = (x, ignore)
 
-let bind (x : 'a t) (f : ('a, 'b) arr) : 'b t =
+let observe f : ('a, 'a) arr =
+  fun x -> f x; x, fun d -> d
+
+let observe_descent f : ('a, 'a) arr =
+  fun x -> x, fun d -> f d; d
+
+let app (x : 'a t) (f : ('a, 'b) arr) : 'b t =
   let x, k = x in
   let y, l = f x in
   y, (fun v -> k (l v))
 
-let ( let* ) = bind
+let (|>) = app
 
 let eval (x : 'a t) = fst x
-
-let descent (x : float t) = snd x 1.
 
 (** A optimized variable. *)
 let var rate x : 'a t =
@@ -26,3 +30,6 @@ let var rate x : 'a t =
 
 let sin : (float, float) arr =
   fun x -> sin x, fun dy -> cos x *. dy
+
+(** Perform gradient descent. *)
+let descent (x : float t) = snd x 1.

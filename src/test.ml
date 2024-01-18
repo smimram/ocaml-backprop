@@ -1,13 +1,16 @@
 open Backprop
 
 let () =
-  Printf.printf "test...";
-  let x = ref 0.5 in
-  let f =
-    let* x = var 0.1 x in
-    sin x
+  Printf.printf "Testing...";
+  (* Printf.printf "%f\n%!" (Stdlib.sin 1.); *)
+  let x = ref 1. in
+  let f () =
+    var 0.1 x
+    (* |> observe (Printf.printf "value is %f\n%!") *)
+    (* |> observe_descent (Printf.printf "gradient is %f\n%!") *)
+    |> sin
   in
-  for _ = 0 to 10 do
-    Printf.printf "value: %f\n%!" (eval f);
-    descent f
+  for _ = 0 to 100 do
+    Printf.printf "value: %f -> %f\n%!" !x (eval (f ()));
+    descent (f ())
   done
