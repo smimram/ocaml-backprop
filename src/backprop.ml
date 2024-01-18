@@ -5,30 +5,13 @@ open Extlib
     gradient. *)
 type 'a t = 'a * ('a -> unit)
 
-(** Backpropagating arrow. *)
-type ('a, 'b) arr = ('a -> 'b * ('b -> 'a))
-
-(** A pure value. *)
-let return x : 'a t = (x, ignore)
-
-(** Apply a function to an argument. *)
-let map (f : ('a, 'b) arr) (x : 'a t) : 'b t =
-  let x, k = x in
-  let y, l = f x in
-  y, (fun v -> k (l v))
-
-let (@@) = map
-
-(** Apply a function to an argument. *)
-let (|>) x f = map f x
-
 (** Observe a value being evaluated. *)
-let observe f : ('a, 'a) arr =
-  fun x -> f x; x, fun d -> d
+let observe f : 'a t -> 'a t =
+  fun (x,k) -> (f x; x), k
 
 (** Observe a value being optimized. *)
-let observe_descent f : ('a, 'a) arr =
-  fun x -> x, fun d -> f d; d
+let observe_descent f : 'a t -> 'a t =
+  fun (x,k) -> x, fun d -> f d; k d
 
 (** Evaluate the result of a computation. *)
 let eval (x : 'a t) = fst x
@@ -43,22 +26,20 @@ let var rate x : 'a t =
   !x, (fun g -> x := !x -. rate *. g)
 
 (** Sigmoid. *)
-let sigmoid : (float, float) arr =
-  fun x ->
+let sigmoid : float t -> float t =
+  fun (x,k) ->
   let y = sigmoid x in
-  y, fun d -> d *. y *. (1. -. y)
+  y, fun d -> k (d *. y *. (1. -. y))
 
-let relu : (float, float) arr =
-  fun x ->
-  relu x, fun d -> d *. step x
+let relu : float t -> float t =
+  fun (x,k) ->
+  relu x, fun d -> k (d *. step x)
 
 (** Sine. *)
-let sin : (float, float) arr =
-  fun x -> sin x, fun d -> d *. cos x
+let sin : float t -> float t =
+  fun (x,k) -> sin x, fun d -> k (d *. cos x)
 
 module Array = struct
-  let map (f : ('a, 'b) arr) : ('a array, 'b array) arr =
-    fun a ->
-      let a = Array.map (map f) a in
-      Array.map fst a,
+  (* let map (f : 'a t -> 'b t) : ('a array) t -> ('b array) t = *)
+    (* fun (a,k) -> _ *)
 end
