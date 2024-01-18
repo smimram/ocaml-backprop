@@ -1,4 +1,20 @@
 (library
  (name backprop)
  (public_name backprop)
+ (modules backprop)
+)
+
+(executable
+ (name test)
+ (libraries backprop)
+ (modules test)
+)
+
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (run ./test.exe)
+  )
+ )
 )
