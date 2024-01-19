@@ -3,8 +3,8 @@ open Backpropagatable
 
 let () =
   Printf.printf "Testing...";
-  (* Printf.printf "%f\n%!" (Stdlib.sin 1.); *)
   let x = ref 1. in
+  (* Define the sin x function. *)
   let f () =
     var ~rate:0.1 x
     (* |> observe (Printf.printf "value is %f\n%!") *)
@@ -12,6 +12,9 @@ let () =
     |> sin
   in
   for _ = 0 to 100 do
-    Printf.printf "value: %f -> %f\n%!" !x (eval (f ()));
+    (* Evaluate the result of the function. *)
+    let y = eval (f ()) in
+    Printf.printf "value: %f -> %f\n%!" !x y;
+    (* Optimize x in order to minimize the function. *)
     descent (f ())
   done
