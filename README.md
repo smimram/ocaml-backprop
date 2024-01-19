@@ -11,5 +11,16 @@ monads in the end).
 
 ## See also
 
+Articles:
+
+- [Backprop as Functor: A compositional perspective on supervised
+  learning](https://arxiv.org/abs/1711.10455)
+- [Backpropagation in the Simply Typed Lambda-calculus with Linear
+  Negation](https://arxiv.org/abs/1909.13768v2)
+- [Demystifying Differentiable Programming: Shift/Reset the Penultimate
+  Backpropagator](Demystifying Differentiable Programming: Shift/Reset the
+  Penultimate Backpropagator)
+
+Libraries:
+
 - the [backprop Haskell library](https://backprop.jle.im/))
-- [Backprop as Functor: A compositional perspective on supervised learning](https://arxiv.org/abs/1711.10455)

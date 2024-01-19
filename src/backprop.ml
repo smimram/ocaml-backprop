@@ -5,10 +5,6 @@ open Extlib
     gradient. *)
 type 'a t = 'a * ('a -> unit)
 
-type scalar = float t
-
-type vector = Vector.t t
-
 (** Observe a value being evaluated. *)
 let observe f : 'a t -> 'a t =
   fun (x,k) -> (f x; x), k
@@ -29,11 +25,11 @@ let descent (x : float t) = snd x 1.
 let var rate x : 'a t =
   !x, (fun g -> x := !x -. rate *. g)
 
-let of_derivable (f,f') : scalar -> scalar =
-  fun (x,k) -> f x, fun d -> k (d *. f' x)
-
-let of_differentiable (f,f') : vector -> vector =
-  fun (x,k) -> f x, fun d -> k (f' x d)
+(** A backpropagatable function from a differentiable one. *)
+let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =
+  fun (x,k) ->
+  let y, df = f x in
+  y, fun d -> k (df d)
 
 (** Sigmoid. *)
 let sigmoid : float t -> float t =
@@ -44,18 +40,15 @@ let sigmoid : float t -> float t =
   y, fun d -> k (d *. y *. (1. -. y))
 
 (** ReLU. *)
-let relu : float t -> float t =
-  fun (x,k) ->
-  relu x, fun d -> k (d *. step x)
+let relu = of_differentiable Differentiable.relu
 
 (** Sine. *)
-let sin ((x,k) : float t) : float t =
-  sin x, fun d -> k (d *. cos x)
+let sin = of_differentiable Differentiable.sin
 
 (** Square. *)
-let square ((x,k) : float t) : float t =
-  x *. x, fun d -> k (d *. 2. *. x)
+let square = of_differentiable Differentiable.square
 
+(*
 (** Apply a pair of functions to a pair. *)
 let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t =
   fun ((a,b),k) ->
@@ -63,13 +56,14 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
   let c, kf = f (a, fun a' -> ar' := Some a') in
   let d, kg = g (b, fun b' -> k (Option.get !ar', b')) in
   (c,d),(fun (c',d') -> kf c'; kg d')
+*)
 
 (** Operations on vectors. *)
 module Vector = struct
   (** Squared norm. *)
-  let squared_norm ((x,k) : vector) : float t =
-    Vector.squared_norm x, fun d -> k (Vector.cmul (2. *. d) x)
+  let squared_norm = of_differentiable Differentiable.Vector.squared_norm
 
+  (*
   (** Map a function on a vector. *)
   let map (f : float t -> float t) ((x,k) : vector) : vector =
     let n = Array.length x in
@@ -84,4 +78,5 @@ module Vector = struct
     let y' = Array.map snd y in
     Array.map fst y,
     fun x' -> Array.iteri (fun i k -> k x'.(i)) y'
+  *)
 end
