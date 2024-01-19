@@ -1,7 +1,7 @@
 (library
  (name backprop)
  (public_name backprop)
- (modules extlib vector backprop)
+ (modules extlib vector differentiable backprop)
 )
 
 (executable
