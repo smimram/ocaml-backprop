@@ -5,7 +5,7 @@ let () =
   (* Printf.printf "%f\n%!" (Stdlib.sin 1.); *)
   let x = ref 1. in
   let f () =
-    var 0.1 x
+    var ~rate:0.1 x
     (* |> observe (Printf.printf "value is %f\n%!") *)
     (* |> observe_descent (Printf.printf "gradient is %f\n%!") *)
     |> sin

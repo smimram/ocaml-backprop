@@ -3,18 +3,3 @@
  (public_name backprop)
  (modules extlib vector differentiable backprop)
 )
-
-(executable
- (name test)
- (libraries backprop)
- (modules test)
-)
-
-(rule
- (alias runtest)
- (action
-  (progn
-   (run ./test.exe)
-  )
- )
-)

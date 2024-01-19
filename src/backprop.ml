@@ -22,7 +22,7 @@ let descent (x : float t) = snd x 1.
 (** {2 Building blocks} *)
 
 (** A optimized variable. *)
-let var rate x : 'a t =
+let var ~rate x : 'a t =
   !x, (fun g -> x := !x -. rate *. g)
 
 (** A backpropagatable function from a differentiable one. *)
@@ -57,6 +57,42 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
 module Vector = struct
   (** Squared norm. *)
   let squared_norm = of_differentiable Differentiable.Vector.squared_norm
+
+  (** Add a bias vector which can be optimized. *)
+  let bias ~rate b : Vector.t t -> Vector.t t =
+    fun (x,k) ->
+    Vector.add x !b,
+    fun d -> b := Vector.sub !b (Vector.cmul rate d); k d
+
+  (** Apply a linear transformation. *)
+  let linear ~rate w : Vector.t t -> Vector.t t =
+    fun (x,k) ->
+    Vector.Matrix.app !w x,
+    fun d -> w := Vector.Matrix.mapi (fun j i w -> w -. rate *. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
+
+  (** Affine layer. *)
+  let affine ~rate w b x = x |> linear ~rate w |> bias ~rate b
+
+  (** Sigmoid layer. *)
+  let sigmoid = of_differentiable Differentiable.Vector.sigmoid
+
+  let activation kind =
+    match kind with
+    | `None -> Fun.id
+    | `Sigmoid -> sigmoid
+
+  let bias_fun = bias
+  let activation_fun = activation
+
+  (** Neural network layer. *)
+  let neural_network ?(activation=`Sigmoid) ~weights ?bias ~rate x =
+    let x = linear ~rate weights x in
+    let x =
+      match bias with
+      | None -> x
+      | Some bias -> bias_fun ~rate bias x
+    in
+    activation_fun activation x
 
   (*
   (** Map a function on a vector. *)

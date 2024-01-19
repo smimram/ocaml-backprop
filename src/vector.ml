@@ -40,6 +40,11 @@ let hadamard x y = map2 ( *. ) x y
 
 let init n f : t = Array.init n f
 
+(** Create a uniformly distributed random vector. *)
+let uniform min max n =
+  let d = max -. min in
+  init n (fun _ -> Random.float d +. min)
+
 let copy (x:t) : t = Array.copy x
 
 (** Maximum entry of a vector. *)
@@ -66,9 +71,13 @@ module Matrix = struct
       vector : t; (** Underlying vector. *)
     }
 
-  let src a = a.cols
+  let cols a = a.cols
 
-  let tgt a = a.rows
+  let rows a = a.rows
+
+  let src a = cols a
+
+  let tgt a = rows a
 
   (** [get a j i] returns the entry in row [j] and column [i]. *)
   let get a j i = a.vector.(j*a.cols+i)
@@ -85,12 +94,35 @@ module Matrix = struct
            s := !s +. get a j i *. x.(i)
          done;
          !s)
-
+  
   (** Initialize a matrix. *)
   let init rows cols f =
     (* TODO: more efficient / imperative *)
     let vector = init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
     { rows; cols; vector }
+
+  let uniform min max rows cols =
+    let d = max -. min in
+    init rows cols (fun _ _ -> Random.float d +. min)
+  
+  let transpose a =
+    init (cols a) (rows a) (fun j i -> get a i j)
+
+  (** Apply the transpose of a matrix to a vector. *)
+  let tapp a x =
+    (* TODO: optimize. *)
+    app (transpose a) x
+
+  let map f a =
+    {
+      rows = a.rows;
+      cols = a.cols;
+      vector = map f a.vector;
+    }
+
+  let mapi f a =
+    (* TODO: optimize. *)
+    init (rows a) (cols a) (fun j i -> f j i (get a j i))
 
   (** Map a function to two matrices of the same size. *)
   let map2 f a b =

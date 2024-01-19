@@ -18,9 +18,6 @@ end
 (** A differentiable function. *)
 type ('a, 'b) t = 'a -> ('b * ('b -> 'a))
 
-(** A differentiable function with multiple inputs and outputs. *)
-type multivariate = (Vector.t , Vector.t) t
-
 (** Sequential composition. *)
 let seq : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t =
   fun f g a ->
@@ -48,13 +45,17 @@ module Vector = struct
   let squared_norm : (Vector.t, float) t =
     fun x -> Vector.squared_norm x, fun d -> Vector.cmul (2. *. d) x
 
+  (** Softmax function. *)
   let softmax : (Vector.t, Vector.t) t =
     fun x -> Vector.softmax x, fun _d -> failwith "TODO"
 
   (** Pointwise application of a differentiable function. *)
-  let map (f : (float, float) t) : multivariate =
+  let map (f : (float, float) t) : (Vector.t, Vector.t) t =
     fun x ->
       let y = Array.map f x in
       Array.map fst y,
       fun d -> Array.map2 (fun (_,f) d -> f d) y d
+
+  (** Pointwise sigmoid. *)
+  let sigmoid = map sigmoid
 end
