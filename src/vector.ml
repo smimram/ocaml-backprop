@@ -46,6 +46,7 @@ let copy (x:t) : t = Array.copy x
 let max (x:t) =
   Array.fold_left max (-. infinity) x
 
+(** Softmax of a vector (useful to convert logits to probabilities). *)
 let softmax (x:t) : t =
   let x =
     (* Improve numerical stability. *)
@@ -55,6 +56,49 @@ let softmax (x:t) : t =
   let s = map exp x |> sum in
   map (fun x -> exp x /. s) x
 
+(** Operations on matrices. *)
 module Matrix = struct
-  type nonrec t = t
+  (** A matrix. *)
+  type nonrec t =
+    {
+      rows : int; (** Number of rows. *)
+      cols : int; (** Number of columns. *)
+      vector : t; (** Underlying vector. *)
+    }
+
+  let src a = a.cols
+
+  let tgt a = a.rows
+
+  (** [get a j i] returns the entry in row [j] and column [i]. *)
+  let get a j i = a.vector.(j*a.cols+i)
+
+  (** Apply a matrix to a vector. *)
+  let app a x =
+    let m = src a in
+    let n = tgt a in
+    assert (m = dim x);
+    init n
+      (fun j ->
+         let s = ref 0. in
+         for i = 0 to m - 1 do
+           s := !s +. get a j i *. x.(i)
+         done;
+         !s)
+
+  (** Initialize a matrix. *)
+  let init rows cols f =
+    (* TODO: more efficient / imperative *)
+    let vector = init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
+    { rows; cols; vector }
+
+  (** Map a function to two matrices of the same size. *)
+  let map2 f a b =
+    assert (src a = src b);
+    assert (tgt a = tgt b);
+    {
+      rows = a.rows;
+      cols = a.cols;
+      vector = map2 f a.vector b.vector;
+    }
 end
