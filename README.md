@@ -36,4 +36,4 @@ Articles:
 
 Libraries:
 
-- the [backprop Haskell library](https://backprop.jle.im/)
+- [backprop Haskell library](https://backprop.jle.im/)
