@@ -17,25 +17,17 @@ jobs:
       - name: Checkout tree
         uses: actions/checkout@v4
 
-      # - name: Setup OCaml
-        # uses: ocaml/setup-ocaml@v2
-        # with:
-          # ocaml-compiler: 5.1
-
-      # - name: Install dependencies
-        # run: opam install . --deps-only --with-test --with-doc
-
       - name: Setup OCaml
         run: sudo apt-get -y install ocaml ocaml-dune
 
       - name: Build
-        run: opam exec -- dune build
+        run: dune build
 
       - name: Test
-        run: opam exec -- dune runtest
+        run: dune runtest
 
       - name: Build documentation
-        run: opam exec -- dune build @doc
+        run: dune build @doc
 
       - name: Set-up pages
         uses: actions/configure-pages@v4
