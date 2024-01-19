@@ -31,6 +31,7 @@ let sub (x:t) (y:t) : t = Array.map2 (-.) x y
 (** Sum of the entries of the vector. *)
 let sum (x:t) = Array.fold_left (+.) 0. x
 
+(** Square of the euclidean norm. *)
 let squared_norm (x:t) = Array.fold_left (fun s x -> s +. x *. x) 0. x
 
 let cmul a x = map (fun x -> a *. x) x
@@ -53,3 +54,7 @@ let softmax (x:t) : t =
   in
   let s = map exp x |> sum in
   map (fun x -> exp x /. s) x
+
+module Matrix = struct
+  type nonrec t = t
+end

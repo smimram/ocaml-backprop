@@ -1,6 +1,6 @@
-open Extlib
+(** Backpropagatable functions. *)
 
-(** The backpropagation "monad": it consists of the result of the evaluation
+(** The backpropagation "functor": it consists of the result of the evaluation
     (the primal) and a function to perform the backpropagation given the
     gradient. *)
 type 'a t = 'a * ('a -> unit)
@@ -32,12 +32,7 @@ let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =
   y, fun d -> k (df d)
 
 (** Sigmoid. *)
-let sigmoid : float t -> float t =
-  fun (x,k) ->
-  let y = sigmoid x in
-  (* Slightly more efficient than the differentiable implementation since we
-     have access to y. *)
-  y, fun d -> k (d *. y *. (1. -. y))
+let sigmoid = of_differentiable Differentiable.sigmoid
 
 (** ReLU. *)
 let relu = of_differentiable Differentiable.relu

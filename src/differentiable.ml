@@ -21,6 +21,13 @@ type ('a, 'b) t = 'a -> ('b * ('b -> 'a))
 (** A differentiable function with multiple inputs and outputs. *)
 type multivariate = (Vector.t , Vector.t) t
 
+(** Sequential composition. *)
+let seq : ('a, 'b) t -> ('b, 'c) t -> ('a, 'c) t =
+  fun f g a ->
+  let b, f' = f a in
+  let c, g' = g b in
+  c, fun c' -> f' (g' c')
+
 (** Build from a derivable real function. *)
 let of_derivable ((f, f'):Derivable.t) : (float, float) t =
   fun x -> f x, fun d -> d *. f' x
@@ -40,6 +47,9 @@ module Vector = struct
   (** Squared norm of a vector. *)
   let squared_norm : (Vector.t, float) t =
     fun x -> Vector.squared_norm x, fun d -> Vector.cmul (2. *. d) x
+
+  let softmax : (Vector.t, Vector.t) t =
+    fun x -> Vector.softmax x, fun _d -> failwith "TODO"
 
   (** Pointwise application of a differentiable function. *)
   let map (f : (float, float) t) : multivariate =
