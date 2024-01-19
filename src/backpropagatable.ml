@@ -21,6 +21,10 @@ let descent (x : float t) = snd x 1.
 
 (** {2 Building blocks} *)
 
+(** A constant. *)
+let cst x : 'a t =
+  x, (fun _ -> ())
+
 (** A optimized variable. *)
 let var ~rate x : 'a t =
   !x, (fun g -> x := !x -. rate *. g)
@@ -57,6 +61,9 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
 module Vector = struct
   (** Squared norm. *)
   let squared_norm = of_differentiable Differentiable.Vector.squared_norm
+
+  (** Squared distance to fixed vector. *)
+  let squared_distance_to x0 = of_differentiable (Differentiable.Vector.squared_distance_to x0)
 
   (** Add a bias vector which can be optimized. *)
   let bias ~rate b : Vector.t t -> Vector.t t =

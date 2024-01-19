@@ -1,4 +1,5 @@
 open Backprop
+open Backpropagatable
 
 let () =
   Printf.printf "Testing...";

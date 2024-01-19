@@ -45,6 +45,12 @@ module Vector = struct
   let squared_norm : (Vector.t, float) t =
     fun x -> Vector.squared_norm x, fun d -> Vector.cmul (2. *. d) x
 
+  (** Squared distance to a fixed vector. *)
+  let squared_distance_to x0 : (Vector.t, float) t =
+    fun x ->
+    let diff = Vector.sub x x0 in
+    Vector.squared_norm diff, fun d -> Vector.cmul (2. *. d) diff
+  
   (** Softmax function. *)
   let softmax : (Vector.t, Vector.t) t =
     fun x -> Vector.softmax x, fun _d -> failwith "TODO"
