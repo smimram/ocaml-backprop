@@ -40,6 +40,8 @@ let hadamard x y = map2 ( *. ) x y
 
 let init n f : t = Array.init n f
 
+let zero n = init n (fun _ -> 0.)
+
 (** Create a uniformly distributed random vector. *)
 let uniform min max n =
   let d = max -. min in
@@ -101,7 +103,7 @@ module Matrix = struct
     let vector = init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
     { rows; cols; vector }
 
-  let uniform min max rows cols =
+  let uniform ?(min=(-1.)) ?(max=1.) rows cols =
     let d = max -. min in
     init rows cols (fun _ _ -> Random.float d +. min)
   
