@@ -43,7 +43,7 @@ let init n f : t = Array.init n f
 let zero n = init n (fun _ -> 0.)
 
 (** Create a uniformly distributed random vector. *)
-let uniform min max n =
+let uniform ~min ~max n =
   let d = max -. min in
   init n (fun _ -> Random.float d +. min)
 
@@ -96,7 +96,7 @@ module Matrix = struct
            s := !s +. get a j i *. x.(i)
          done;
          !s)
-  
+
   (** Initialize a matrix. *)
   let init rows cols f =
     (* TODO: more efficient / imperative *)
@@ -106,7 +106,7 @@ module Matrix = struct
   let uniform ?(min=(-1.)) ?(max=1.) rows cols =
     let d = max -. min in
     init rows cols (fun _ _ -> Random.float d +. min)
-  
+
   let transpose a =
     init (cols a) (rows a) (fun j i -> get a i j)
 
@@ -135,4 +135,21 @@ module Matrix = struct
       cols = a.cols;
       vector = map2 f a.vector b.vector;
     }
+end
+
+(** Linear maps. Those are roughly the same as matrices, excepting for the
+    convention that arguments are input and then output. *)
+module Linear = struct
+  type t = Matrix.t
+  let src (a:t) = Matrix.src a
+  let tgt (a:t) = Matrix.tgt a
+  let init src tgt f : t = Matrix.init tgt src (fun j i -> f i j)
+  let uniform src tgt : t = Matrix.uniform tgt src
+  let mapi f (a:t) : t = Matrix.mapi (fun j i w -> f i j w) a
+
+  (** Apply a linear function to a vector. *)
+  let app (f:t) x = Matrix.app f x
+
+  (** Apply the transpose of a linear function to a vector. *)
+  let tapp (f:t) x = Matrix.tapp f x
 end

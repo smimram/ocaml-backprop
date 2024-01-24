@@ -10,12 +10,12 @@ let () =
   (* Train a network with one hidden layer of size 6. *)
   let n = 6 in
   let layer1 =
-    let weights = ref @@ Vector.Matrix.uniform n 1 in
+    let weights = ref @@ Vector.Linear.uniform 1 n in
     let bias = ref @@ Vector.zero n in
     Backpropagatable.Vector.neural_network ~rate:0.2 ~activation:`Sigmoid ~weights ~bias
   in
   let layer2 =
-    let weights = ref @@ Vector.Matrix.uniform 1 n in
+    let weights = ref @@ Vector.Linear.uniform n 1 in
     let bias = ref @@ Vector.zero 1 in
     Backpropagatable.Vector.neural_network ~rate:0.2 ~activation:`Sigmoid ~weights ~bias
   in

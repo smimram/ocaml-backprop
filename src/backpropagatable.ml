@@ -74,8 +74,8 @@ module Vector = struct
   (** Apply a linear transformation. *)
   let linear ~rate w : Vector.t t -> Vector.t t =
     fun (x,k) ->
-    Vector.Matrix.app !w x,
-    fun d -> w := Vector.Matrix.mapi (fun j i w -> w -. rate *. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
+    Vector.Linear.app !w x,
+    fun d -> w := Vector.Linear.mapi (fun i j w -> w -. rate *. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
 
   (** Affine layer. *)
   let affine ~rate w b x = x |> linear ~rate w |> bias ~rate b

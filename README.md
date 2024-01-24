@@ -24,7 +24,7 @@ descent). On such a value you can call `eval` in order to exact the value and
 
 Functions operating on backpropagatable values are usually defined from
 _differentiable functions_, which are roughly pairs consisting of a function
-(`'a -> 'b`)and its differential (`'b -> 'a`).
+(`'a -> 'b`) and its differential (`'b -> 'a`).
 
 ## See also
 
