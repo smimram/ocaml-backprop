@@ -143,6 +143,7 @@ module Linear = struct
   type t = Matrix.t
   let src (a:t) = Matrix.src a
   let tgt (a:t) = Matrix.tgt a
+  let get (a:t) i j = Matrix.get a j i
   let init src tgt f : t = Matrix.init tgt src (fun j i -> f i j)
   let uniform src tgt : t = Matrix.uniform tgt src
   let mapi f (a:t) : t = Matrix.mapi (fun j i w -> f i j w) a
@@ -152,4 +153,39 @@ module Linear = struct
 
   (** Apply the transpose of a linear function to a vector. *)
   let tapp (f:t) x = Matrix.tapp f x
+end
+
+module Tensor = struct
+  (** Dimensions of the tensor. *)
+  type dimensions = int list
+
+  type t =
+    {
+      src : dimensions;
+      tgt : dimensions;
+      f : Linear.t
+    }
+
+  (** Ensure that point x is below the dimension. *)
+  let within (dims:dimensions) x =
+    let rec aux = function
+      | x::xx, d::dims -> x < d && aux (xx,dims)
+      | [], [] -> true
+      | _ -> false
+    in
+    aux (x,dims)
+
+  (** Offset of a coordinate. *)
+  let offset (dims:dimensions) x =
+    assert (within dims x);
+    let rec aux p = function
+      | x::xx, d::dims -> p * x + aux (p*d) (xx,dims)
+      | [], [] -> 0
+      | _ -> assert false
+    in
+    aux 1 (x,dims)
+
+  (** Retrieve an element. *)
+  let get a x y =
+    Linear.get a.f (offset a.src x) (offset a.tgt y)
 end
