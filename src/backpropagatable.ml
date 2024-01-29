@@ -47,6 +47,12 @@ let sin = of_differentiable Differentiable.sin
 (** Square. *)
 let square = of_differentiable Differentiable.square
 
+(** Fold a function over a series of inputs. *)
+let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
+  match l () with
+  | Nil -> s
+  | Cons (x, l) -> f s x |> fold f l
+
 (*
 (** Apply a pair of functions to a pair. *)
 let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t =
