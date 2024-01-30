@@ -36,6 +36,7 @@ Articles:
   Negation](https://arxiv.org/abs/1909.13768v2)
 - [Demystifying Differentiable Programming: Shift/Reset the Penultimate
   Backpropagator](https://arxiv.org/abs/1803.10228)
+- [Algorithmic Differentiation](https://ocaml.xyz/algodiff.html)
 
 Libraries:
 

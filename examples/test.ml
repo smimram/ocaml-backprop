@@ -6,7 +6,7 @@ let () =
   let x = ref 1. in
   (* Define the sin x function. *)
   let f () =
-    var ~rate:0.1 x
+    var x
     (* |> observe (Printf.printf "value is %f\n%!") *)
     (* |> observe_descent (Printf.printf "gradient is %f\n%!") *)
     |> sin
@@ -16,5 +16,5 @@ let () =
     let y = eval (f ()) in
     Printf.printf "value: %f -> %f\n%!" !x y;
     (* Optimize x in order to minimize the function. *)
-    descent (f ())
+    f () |> descent 0.1 |> run
   done

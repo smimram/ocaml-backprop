@@ -12,12 +12,12 @@ let () =
   let layer1 =
     let weights = ref @@ Vector.Linear.uniform 1 n in
     let bias = ref @@ Vector.zero n in
-    Backpropagatable.Vector.neural_network ~rate:0.2 ~activation:`Sigmoid ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   let layer2 =
     let weights = ref @@ Vector.Linear.uniform n 1 in
     let bias = ref @@ Vector.zero 1 in
-    Backpropagatable.Vector.neural_network ~rate:0.2 ~activation:`Sigmoid ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   let net x = x |> layer1 |> layer2 in
   for _ = 0 to 10_000 do
@@ -25,13 +25,14 @@ let () =
     List.iter
       (fun (x,y) ->
          let y = Vector.scalar y in
-         let err =
+         let descent =
            Vector.scalar x
            |> Backpropagatable.cst
            |> net
            |> Backpropagatable.Vector.squared_distance_to y
+           |> Backpropagatable.descent 0.2
          in
-         Backpropagatable.descent err
+         Backpropagatable.run descent
       ) dataset
   done;
 

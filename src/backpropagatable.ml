@@ -17,7 +17,12 @@ let observe_descent f : 'a t -> 'a t =
 let eval (x : 'a t) = fst x
 
 (** Perform gradient descent. *)
-let descent (x : float t) = snd x 1.
+let descent eta (x : float t) : unit t =
+  (), fun () -> snd x eta
+
+(** Run gradient descent. *)
+let run (x : unit t) =
+  snd x ()
 
 (** {2 Building blocks} *)
 
@@ -26,8 +31,8 @@ let cst x : 'a t =
   x, (fun _ -> ())
 
 (** A optimized variable. *)
-let var ~rate x : 'a t =
-  !x, (fun g -> x := !x -. rate *. g)
+let var x : 'a t =
+  !x, (fun g -> x := !x -. g)
 
 (** A backpropagatable function from a differentiable one. *)
 let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =
@@ -72,19 +77,19 @@ module Vector = struct
   let squared_distance_to x0 = of_differentiable (Differentiable.Vector.squared_distance_to x0)
 
   (** Add a bias vector which can be optimized. *)
-  let bias ~rate b : Vector.t t -> Vector.t t =
+  let bias b : Vector.t t -> Vector.t t =
     fun (x,k) ->
     Vector.add x !b,
-    fun d -> b := Vector.sub !b (Vector.cmul rate d); k d
+    fun d -> b := Vector.sub !b d; k d
 
   (** Apply a linear transformation. *)
-  let linear ~rate w : Vector.t t -> Vector.t t =
+  let linear w : Vector.t t -> Vector.t t =
     fun (x,k) ->
     Vector.Linear.app !w x,
-    fun d -> w := Vector.Linear.mapi (fun i j w -> w -. rate *. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
+    fun d -> w := Vector.Linear.mapi (fun i j w -> w -. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
 
   (** Affine layer. *)
-  let affine ~rate w b x = x |> linear ~rate w |> bias ~rate b
+  let affine w b x = x |> linear w |> bias b
 
   (** Sigmoid layer. *)
   let sigmoid = of_differentiable Differentiable.Vector.sigmoid
@@ -98,12 +103,12 @@ module Vector = struct
   let activation_fun = activation
 
   (** Neural network layer. *)
-  let neural_network ?(activation=`Sigmoid) ~weights ?bias ~rate x =
-    let x = linear ~rate weights x in
+  let neural_network ?(activation=`Sigmoid) ~weights ?bias x =
+    let x = linear weights x in
     let x =
       match bias with
       | None -> x
-      | Some bias -> bias_fun ~rate bias x
+      | Some bias -> bias_fun bias x
     in
     activation_fun activation x
 
