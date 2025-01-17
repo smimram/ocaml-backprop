@@ -1,8 +1,6 @@
 (** Backpropagatable functions. *)
 
-(** The backpropagation "functor": it consists of the result of the evaluation
-    (the primal) and a function to perform the backpropagation given the
-    gradient. *)
+(** The backpropagation "functor": it consists of the result of the evaluation (the primal) and a function to perform the backpropagation given the gradient. *)
 type 'a t = 'a * ('a -> unit)
 
 (** Observe a value being evaluated. *)
@@ -57,6 +55,15 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
   match l () with
   | Nil -> s
   | Cons (x, l) -> f s x |> fold f l
+
+(*
+(** Operations on pairs. *)
+module Pair = struct
+  let unit_left (x : (unit * 'a) t) : 'a t =
+    let ((), x), (kl, kr) = x in
+    x, 
+end
+*)
 
 (*
 (** Apply a pair of functions to a pair. *)

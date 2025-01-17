@@ -1,5 +1,9 @@
+(** Vectors. *)
+
+(** A vector. *)
 type t = float array
 
+(** String representation of a vector. *)
 let to_string (x:t) =
   x
   |> Array.to_list
