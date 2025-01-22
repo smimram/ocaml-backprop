@@ -141,8 +141,7 @@ module Matrix = struct
     }
 end
 
-(** Linear maps. Those are roughly the same as matrices, excepting for the
-    convention that arguments are input and then output. *)
+(** Linear maps. Those are roughly the same as matrices, excepting for the convention that arguments are input and then output. *)
 module Linear = struct
   type t = Matrix.t
   let src (a:t) = Matrix.src a
