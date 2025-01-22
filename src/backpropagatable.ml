@@ -14,9 +14,12 @@ let observe_descent f : 'a t -> 'a t =
 (** Evaluate the result of a computation. *)
 let eval (x : 'a t) = fst x
 
-(** Perform gradient descent. *)
-let descent eta (x : float t) : unit t =
+(** Perform gradient climbing. *)
+let climb eta (x : float t) : unit t =
   (), fun () -> snd x eta
+
+(** Perform gradient descent. *)
+let descent eta = climb (-.eta)
 
 (** Run gradient descent. *)
 let run (x : unit t) =
@@ -30,7 +33,7 @@ let cst x : 'a t =
 
 (** A optimized variable. *)
 let var x : 'a t =
-  !x, (fun g -> x := !x -. g)
+  !x, (fun g -> x := !x +. g)
 
 (** A backpropagatable function from a differentiable one. *)
 let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =
@@ -87,13 +90,13 @@ module Vector = struct
   let bias b : Vector.t t -> Vector.t t =
     fun (x,k) ->
     Vector.add x !b,
-    fun d -> b := Vector.sub !b d; k d
+    fun d -> b := Vector.add !b d; k d
 
   (** Apply a linear transformation. *)
   let linear w : Vector.t t -> Vector.t t =
     fun (x,k) ->
     Vector.Linear.app !w x,
-    fun d -> w := Vector.Linear.mapi (fun i j w -> w -. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
+    fun d -> w := Vector.Linear.mapi (fun i j w -> w +. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
 
   (** Affine layer. *)
   let affine w b x = x |> linear w |> bias b
