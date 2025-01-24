@@ -31,9 +31,67 @@ let run (x : unit t) =
 let cst x : 'a t =
   x, (fun _ -> ())
 
+(** References. *)
+module Ref = struct
+  (** A reference. *)
+  type 'a t =
+    {
+      get : unit -> 'a;
+      set : 'a -> unit
+    }
+
+  type 'a ref = 'a t
+
+  let get r = r.get ()
+
+  let set r x = r.set x
+
+  (** A basic reference. *)
+  let make x =
+    let r = ref x in
+    let get () = !r in
+    let set x = r := x in
+    { get; set }
+
+  (** A smoothed reference. The first parameter controls smoothing: 1 acts like a traditional reference, 0 never updates. *)
+  let smooth a x =
+    let a' = 1. -. a in
+    let r = ref x in
+    let get () = !r in
+    let set x = r := a' *. !r +. a *. x in
+    { get; set }
+
+  (** Pool of references with delayed evaluation. *)
+  module Pool = struct
+    (** A pool of variables. *)
+    type t = (unit -> unit) Stdlib.ref
+
+    (** Create a pool of variables. *)
+    let create () : t = ref (fun () -> ())
+
+    (** Update all the variables of the pool. *)
+    let update (pool : t) = !pool ()
+
+    (** Register a new effect on the pool. *)
+    let register (pool : t) g =
+      let f = !pool in
+      pool := (fun () -> f (); g ())
+
+    (** Create a reference which, when activated, takes the last assigned value. *)
+    let last pool x =
+      let r = ref x in
+      let s = ref x in
+      let get () = !r in
+      let set x = s := x in
+      let update () = r := !s in
+      register pool update;
+      { get; set }     
+  end
+end
+
 (** A optimized variable. *)
-let var x : 'a t =
-  !x, (fun g -> x := !x +. g)
+let var r : 'a t =
+  Ref.get r, (fun g -> Ref.set r (Ref.get r +. g))
 
 (** A backpropagatable function from a differentiable one. *)
 let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =

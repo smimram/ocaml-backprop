@@ -3,7 +3,7 @@ open Backpropagatable
 
 let () =
   Printf.printf "Testing...";
-  let x = ref 1. in
+  let x = Ref.make 1. in
   (* Define the sin x function. *)
   let f () =
     var x
@@ -14,7 +14,7 @@ let () =
   for _ = 0 to 100 do
     (* Evaluate the result of the function. *)
     let y = eval (f ()) in
-    Printf.printf "value: %f -> %f\n%!" !x y;
+    Printf.printf "value: %f -> %f\n%!" (Ref.get x) y;
     (* Optimize x in order to minimize the function. *)
     f () |> descent 0.1 |> run
   done
