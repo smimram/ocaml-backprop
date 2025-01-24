@@ -55,10 +55,27 @@ module Ref = struct
 
   (** A smoothed reference. The first parameter controls smoothing: 1 acts like a traditional reference, 0 never updates. *)
   let smooth a x =
-    let a' = 1. -. a in
     let r = ref x in
+    let a' = 1. -. a in
     let get () = !r in
     let set x = r := a' *. !r +. a *. x in
+    { get; set }
+
+  (** Average every n assignations. *)
+  let average n x =
+    let r = ref x in
+    let s = Array.make n x in
+    let i = ref 0 in
+    let get () = !r in
+    let set x =
+      if !i = n then
+        (
+          r := Array.fold_left (+.) 0. s /. float n;
+          i := 0
+        );
+      s.(!i) <- x;
+      incr i
+    in
     { get; set }
 
   (** Pool of references with delayed evaluation. *)
