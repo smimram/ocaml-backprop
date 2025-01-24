@@ -74,9 +74,19 @@ end
 
 (** Functions operating on vectors. *)
 module Vector = struct
+  let cadd a : (Vector.t, Vector.t) t =
+    fun x -> Vector.cadd a x, fun d -> d
+
+  let cmul a : (Vector.t, Vector.t) t =
+    fun x -> Vector.cmul a x, fun d -> Vector.cmul a d
+
   (** Add two vectors. *)
   let add : (Vector.t * Vector.t, Vector.t) t =
     fun (x, y) -> Vector.add x y, fun d -> d, d
+
+  (** Hadamrd product of two vectors. *)
+  let hadamard : (Vector.t * Vector.t, Vector.t) t =
+    fun (x, y) -> Vector.hadamard x y, fun d -> Vector.hadamard d y, Vector.hadamard d x
 
   (** Squared norm of a vector. *)
   let squared_norm : (Vector.t, float) t =
@@ -101,4 +111,6 @@ module Vector = struct
 
   (** Pointwise sigmoid. *)
   let sigmoid = map sigmoid
+
+  let tanh = map tanh
 end

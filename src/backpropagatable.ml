@@ -86,8 +86,15 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
 
 (** Operations on vectors. *)
 module Vector = struct
+  let cadd a = of_differentiable (Differentiable.Vector.cadd a)
+
+  let cmul a = of_differentiable (Differentiable.Vector.cmul a)
+
   (** Add two vectors. *)
-  let add = of_differentiable Differentiable.Vector.add
+  let add x y = of_differentiable Differentiable.Vector.add @@ pair x y
+
+  (** Hadamard product of two vectors. *)
+  let hadamard x y = of_differentiable Differentiable.Vector.hadamard @@ pair x y
 
   (** Squared norm. *)
   let squared_norm = of_differentiable Differentiable.Vector.squared_norm
@@ -113,6 +120,8 @@ module Vector = struct
   (** Sigmoid layer. *)
   let sigmoid = of_differentiable Differentiable.Vector.sigmoid
 
+  let tanh = of_differentiable Differentiable.Vector.tanh
+
   let activation kind =
     match kind with
     | `None -> Fun.id
@@ -130,6 +139,18 @@ module Vector = struct
       | Some bias -> bias_fun bias x
     in
     activation_fun activation x
+
+  (** Gated recurrent unit layer. The argument is the state and then the input.
+      @see https://en.wikipedia.org/wiki/Gated_recurrent_unit Wikipedia
+  *)
+  let gated_recurrent_unit ~weight ~state_weight ~bias (s,x) =
+    let wz, wr, wh = weight in
+    let uz, ur, uh = state_weight in
+    let bz, br, bh = bias in
+    let z = sigmoid @@ add (linear wz x) (add (linear uz s) bz) in
+    let r = sigmoid @@ add (linear wr x) (add (linear ur s) br) in
+    let h = tanh @@ add (linear wh x) (add (linear uh (hadamard r s)) bh) in
+    add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h)
 
   (*
   (** Map a function on a vector. *)

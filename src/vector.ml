@@ -40,6 +40,8 @@ let squared_norm (x:t) = Array.fold_left (fun s x -> s +. x *. x) 0. x
 
 let cmul a x = map (fun x -> a *. x) x
 
+let cadd a x = map (fun x -> a +. x) x
+
 let hadamard x y = map2 ( *. ) x y
 
 let init n f : t = Array.init n f
