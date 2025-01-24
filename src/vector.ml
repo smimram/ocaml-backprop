@@ -95,6 +95,11 @@ module Matrix = struct
   (** [get a j i] returns the entry in row [j] and column [i]. *)
   let get a j i = a.vector.(j*a.cols+i)
 
+  let add a b =
+    assert (src a = src b);
+    assert (tgt a = tgt b);
+    { rows = a.rows; cols = a.cols; vector = add a.vector b.vector }
+
   (** Apply a matrix to a vector. *)
   let app a x =
     let m = src a in
@@ -157,6 +162,7 @@ module Linear = struct
   let init src tgt f : t = Matrix.init tgt src (fun j i -> f i j)
   let uniform src tgt : t = Matrix.uniform tgt src
   let mapi f (a:t) : t = Matrix.mapi (fun j i w -> f i j w) a
+  let add (a:t) (b:t) = Matrix.add a b
 
   (** Apply a linear function to a vector. *)
   let app (f:t) x = Matrix.app f x

@@ -63,6 +63,7 @@ let square = of_derivable Derivable.square
 (** The sine function. *)
 let sin = of_derivable Derivable.sin
 
+(*
 (** Functions operating on pairs. *)
 module Product = struct
   let unit_left : ((unit * 'a) , 'a) t =
@@ -71,6 +72,7 @@ module Product = struct
   let unit_right : (('a * unit) , 'a) t =
     fun (x, ()) -> x, fun x' -> (), x'
 end
+*)
 
 (** Functions operating on vectors. *)
 module Vector = struct
@@ -109,8 +111,15 @@ module Vector = struct
       Array.map fst y,
       fun d -> Array.map2 (fun (_,f) d -> f d) y d
 
+  module Linear = struct
+    (** Apply a linear function to a vector. *)
+    let app : (Vector.Matrix.t * Vector.t, Vector.t) t =
+      fun (m, x) -> Vector.Linear.app m x, fun d -> Vector.Linear.mapi (fun i j _ -> x.(i) *. d.(j)) m, Vector.Matrix.tapp m d
+  end
+
   (** Pointwise sigmoid. *)
   let sigmoid = map sigmoid
 
+  (** Pointwise hyperbolic tangent. *)
   let tanh = map tanh
 end

@@ -112,14 +112,24 @@ module Vector = struct
   (** Add a bias vector which can be optimized. *)
   let bias b x = add (var b) x
 
+  (** Linear transformations. *)
+  module Linear = struct
+    let var x : Vector.Linear.t t =
+      !x, (fun d -> x := Vector.Linear.add !x d)
+
+    let app f x = of_differentiable Differentiable.Vector.Linear.app @@ pair f x
+  end
+
+    (*
   (** Apply a linear transformation. *)
-  let linear w : Vector.t t -> Vector.t t =
+  let linear w x =
     fun (x,k) ->
     Vector.Linear.app !w x,
     fun d -> w := Vector.Linear.mapi (fun i j w -> w +. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
+    *)
 
   (** Affine layer. *)
-  let affine w b x = x |> linear w |> bias b
+  let affine w b x = x |> Linear.app w |> bias b
 
   (** Sigmoid layer. *)
   let sigmoid = of_differentiable Differentiable.Vector.sigmoid
@@ -136,7 +146,7 @@ module Vector = struct
 
   (** Neural network layer. *)
   let neural_network ?(activation=`Sigmoid) ~weights ?bias x =
-    let x = linear weights x in
+    let x = Linear.app (Linear.var weights) x in
     let x =
       match bias with
       | None -> x
@@ -149,9 +159,9 @@ module Vector = struct
     let wz, wr, wh = weight in
     let uz, ur, uh = state_weight in
     let bz, br, bh = bias in
-    let z = sigmoid @@ add (linear wz x) (add (linear uz s) bz) in
-    let r = sigmoid @@ add (linear wr x) (add (linear ur s) br) in
-    let h = tanh @@ add (linear wh x) (add (linear uh (hadamard r s)) bh) in
+    let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
+    let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
+    let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
     add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h)
 
   (*
