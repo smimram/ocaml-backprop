@@ -16,6 +16,9 @@ module Derivable = struct
   (** The sigmoid activation function. *)
   let sigmoid : t = sigmoid, fun x -> let y = sigmoid x in y *. (1. -. y)
 
+  (** Hyperbolic tangent. *)
+  let tanh : t = tanh, fun x -> let y = tanh x in 1. -. y *. y
+
   (** The rectified linear unit activation function. *)
   let relu : t = relu , step
 
@@ -46,6 +49,10 @@ let of_derivable ((f, f'):Derivable.t) : (float, float) t =
 let sigmoid : (float, float) t =
   (* Slightly more efficient implementation than of_derivable Derivable.sigmoid since we compute y once. *)
   fun x -> let y = sigmoid x in y, fun d -> d *. y *. (1. -. y)
+
+(** Hyperbolic tangent. *)
+(* TODO: could be optimized like sigmoid. *)
+let tanh = of_derivable Derivable.tanh
 
 (** The rectified linear unit activation function. *)
 let relu = of_derivable Derivable.relu
