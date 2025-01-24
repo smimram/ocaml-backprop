@@ -34,9 +34,14 @@ let run (x : unit t) =
 let cst x : 'a t =
   x, (fun _ -> ())
 
-(** A optimized variable. *)
-let var x : float t =
-  !x, (fun d -> x := !x +. d)
+module VarMake (E: sig type t val add : t -> t -> t end) =
+struct
+  (** A optimized variable. *)
+  let var x : E.t t =
+    !x, (fun d -> x := E.add !x d)
+end
+
+include VarMake(Float)
 
 (** A backpropagatable function from a differentiable one. *)
 let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =
@@ -87,9 +92,7 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
 
 (** Operations on vectors. *)
 module Vector = struct
-  (** Create an optimizable vector. *)
-  let var x : Vector.t t =
-    !x, (fun d -> x := Vector.add !x d)
+  include VarMake(Vector)
 
   (** Add a constant. *)
   let cadd a = of_differentiable (Differentiable.Vector.cadd a)
@@ -114,8 +117,7 @@ module Vector = struct
 
   (** Linear transformations. *)
   module Linear = struct
-    let var x : Vector.Linear.t t =
-      !x, (fun d -> x := Vector.Linear.add !x d)
+    include VarMake (Vector.Linear)
 
     let app f x = of_differentiable Differentiable.Vector.Linear.app @@ pair f x
   end
