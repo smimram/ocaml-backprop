@@ -14,6 +14,7 @@ let to_string (x:t) =
 let of_list l : t =
   Array.of_list l
 
+(** Dimension. *)
 let dim (x:t) = Array.length x
 
 let scalar x : t = [|x|]
@@ -28,8 +29,10 @@ let mapi f (x:t) : t = Array.mapi f x
 
 let map2 f (x:t) (y:t) : t = Array.map2 f x y
 
+(** Addition. *)
 let add (x:t) (y:t) : t = Array.map2 (+.) x y
 
+(** Subtraction. *)
 let sub (x:t) (y:t) : t = Array.map2 (-.) x y
 
 (** Sum of the entries of the vector. *)
@@ -38,9 +41,11 @@ let sum (x:t) = Array.fold_left (+.) 0. x
 (** Square of the euclidean norm. *)
 let squared_norm (x:t) = Array.fold_left (fun s x -> s +. x *. x) 0. x
 
-let cmul a x = map (fun x -> a *. x) x
-
+(** Add a constant. *)
 let cadd a x = map (fun x -> a +. x) x
+
+(** Multiply by a constant. *)
+let cmul a x = map (fun x -> a *. x) x
 
 let hadamard x y = map2 ( *. ) x y
 

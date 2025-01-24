@@ -35,8 +35,8 @@ let cst x : 'a t =
   x, (fun _ -> ())
 
 (** A optimized variable. *)
-let var x : 'a t =
-  !x, (fun g -> x := !x +. g)
+let var x : float t =
+  !x, (fun d -> x := !x +. d)
 
 (** A backpropagatable function from a differentiable one. *)
 let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =
@@ -62,6 +62,7 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
   | Nil -> s
   | Cons (x, l) -> f s x |> fold f l
 
+(** Pair two values. *)
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
   (eval x, eval y), fun (d1,d2) -> update x d1; update y d2
 
@@ -86,8 +87,14 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
 
 (** Operations on vectors. *)
 module Vector = struct
+  (** Create an optimizable vector. *)
+  let var x : Vector.t t =
+    !x, (fun d -> x := Vector.add !x d)
+
+  (** Add a constant. *)
   let cadd a = of_differentiable (Differentiable.Vector.cadd a)
 
+  (** Multiply by a constant. *)
   let cmul a = of_differentiable (Differentiable.Vector.cmul a)
 
   (** Add two vectors. *)
@@ -103,10 +110,7 @@ module Vector = struct
   let squared_distance_to x0 = of_differentiable (Differentiable.Vector.squared_distance_to x0)
 
   (** Add a bias vector which can be optimized. *)
-  let bias b : Vector.t t -> Vector.t t =
-    fun (x,k) ->
-    Vector.add x !b,
-    fun d -> b := Vector.add !b d; k d
+  let bias b x = add (var b) x
 
   (** Apply a linear transformation. *)
   let linear w : Vector.t t -> Vector.t t =
