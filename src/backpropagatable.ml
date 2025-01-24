@@ -144,9 +144,7 @@ module Vector = struct
     in
     activation_fun activation x
 
-  (** Gated recurrent unit layer. The argument is the state and then the input.
-      @see https://en.wikipedia.org/wiki/Gated_recurrent_unit Wikipedia
-  *)
+  (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
   let gated_recurrent_unit ~weight ~state_weight ~bias (s,x) =
     let wz, wr, wh = weight in
     let uz, ur, uh = state_weight in
