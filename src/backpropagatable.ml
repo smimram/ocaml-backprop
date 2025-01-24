@@ -34,14 +34,23 @@ let run (x : unit t) =
 let cst x : 'a t =
   x, (fun _ -> ())
 
-module VarMake (E: sig type t val add : t -> t -> t end) =
+module VarMake (E: sig type t val add : t -> t -> t val cmul : float -> t -> t end) =
 struct
+  module Var = struct
+    let make x : E.t t =
+      !x, (fun d -> x := E.add !x d)
+
+    (** A smoothed reference. The first parameter controls smoothing: 1 acts like a traditional reference, 0 never updates. *)
+    let smooth a x =
+      let a' = (1. -. a) in
+      !x, (fun d -> x := E.add (E.cmul a' !x) (E.cmul a d))
+  end
+
   (** A optimized variable. *)
-  let var x : E.t t =
-    !x, (fun d -> x := E.add !x d)
+  let var = Var.make
 end
 
-include VarMake(Float)
+include VarMake(struct include Float let cmul = ( *. ) end)
 
 (** A backpropagatable function from a differentiable one. *)
 let of_differentiable (f : ('a,'b) Differentiable.t) : 'a t -> 'b t =

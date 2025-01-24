@@ -100,6 +100,9 @@ module Matrix = struct
     assert (tgt a = tgt b);
     { rows = a.rows; cols = a.cols; vector = add a.vector b.vector }
 
+  let cmul x a =
+    { rows = a.rows; cols = a.cols; vector = cmul x a.vector }
+
   (** Apply a matrix to a vector. *)
   let app a x =
     let m = src a in
@@ -163,6 +166,7 @@ module Linear = struct
   let uniform src tgt : t = Matrix.uniform tgt src
   let mapi f (a:t) : t = Matrix.mapi (fun j i w -> f i j w) a
   let add (a:t) (b:t) = Matrix.add a b
+  let cmul x a = Matrix.cmul x a
 
   (** Apply a linear function to a vector. *)
   let app (f:t) x = Matrix.app f x
