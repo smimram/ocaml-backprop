@@ -17,4 +17,6 @@ let () =
     Printf.printf "value: %f -> %f\n%!" !x y;
     (* Optimize x in order to minimize the function. *)
     f () |> descent 0.1 |> run
-  done
+  done;
+  (* Minimum is reached at -π/2. *)
+  assert (-1.58 <= !x && !x <= -1.57)
