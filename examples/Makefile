@@ -2,7 +2,10 @@ all:
 	@dune build
 
 test:
-	@dune exec ./test.exe
+	@dune runtest -f
+
+sine:
+	@dune exec ./sine.exe
 
 square:
 	@dune exec ./square.exe

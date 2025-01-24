@@ -1,22 +1,21 @@
 (executable
+ (name sine)
+ (libraries backprop)
+ (modules sine)
+)
+
+(rule
+ (alias runtest)
+ (action (run ./sine.exe))
+)
+
+(executable
  (name square)
  (libraries backprop)
  (modules square)
 )
 
-
-(executable
- (name test)
- (libraries backprop)
- (modules test)
-)
-
 (rule
  (alias runtest)
- (action
-  (progn
-   (run ./test.exe)
-   (run ./square.exe)
-  )
- )
+ (action (run ./square.exe))
 )
