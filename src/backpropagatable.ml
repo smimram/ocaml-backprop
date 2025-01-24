@@ -14,9 +14,12 @@ let observe_descent f : 'a t -> 'a t =
 (** Evaluate the result of a computation. *)
 let eval (x : 'a t) = fst x
 
+(** Update according to parameter. *)
+let update (x : 'a t) d = snd x d
+
 (** Perform gradient climbing. *)
-let climb eta (x : float t) : unit t =
-  (), fun () -> snd x eta
+let climb eta x : unit t =
+  (), fun () -> update x eta
 
 (** Perform gradient descent. *)
 let descent eta = climb (-.eta)
@@ -58,6 +61,9 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
   match l () with
   | Nil -> s
   | Cons (x, l) -> f s x |> fold f l
+
+let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
+  (eval x, eval y), fun (d1,d2) -> update x d1; update y d2
 
 (*
 (** Operations on pairs. *)
