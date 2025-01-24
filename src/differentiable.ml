@@ -74,6 +74,10 @@ end
 
 (** Functions operating on vectors. *)
 module Vector = struct
+  (** Add two vectors. *)
+  let add : (Vector.t * Vector.t, Vector.t) t =
+    fun (x, y) -> Vector.add x y, fun d -> d, d
+
   (** Squared norm of a vector. *)
   let squared_norm : (Vector.t, float) t =
     fun x -> Vector.squared_norm x, fun d -> Vector.cmul (2. *. d) x

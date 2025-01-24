@@ -80,6 +80,9 @@ let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t 
 
 (** Operations on vectors. *)
 module Vector = struct
+  (** Add two vectors. *)
+  let add = of_differentiable Differentiable.Vector.add
+
   (** Squared norm. *)
   let squared_norm = of_differentiable Differentiable.Vector.squared_norm
 
