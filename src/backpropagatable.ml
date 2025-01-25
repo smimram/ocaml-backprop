@@ -41,9 +41,28 @@ struct
       !x, (fun d -> x := E.add !x d)
 
     (** A smoothed reference. The first parameter controls smoothing: 1 acts like a traditional reference, 0 never updates. *)
-    let smooth a x =
-      let a' = (1. -. a) in
-      !x, (fun d -> x := E.add (E.cmul a' !x) (E.cmul a d))
+    let smooth a x : E.t t =
+      !x, (fun d -> x := E.add !x (E.cmul a d))
+
+    (** A reference which is averaged over n values. *)
+    let average n x : E.t t =
+      let s = Array.make n !x in
+      let i = ref 0 in
+      let store y =
+        if !i = n then
+          (
+            let d = ref s.(0) in
+            for i = 1 to n - 1 do
+              d := E.add !d s.(i)
+            done;
+            let d = E.cmul (1. /. float n) !d in
+            x := E.add !x d;
+            i := 0
+          );
+        s.(!i) <- y;
+        incr i
+      in
+      !x, (fun d -> store d)
   end
 
   (** A optimized variable. *)
@@ -165,30 +184,20 @@ module Vector = struct
     in
     activation_fun activation x
 
-  (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-  let gated_recurrent_unit ~weight ~state_weight ~bias (s,x) =
-    let wz, wr, wh = weight in
-    let uz, ur, uh = state_weight in
-    let bz, br, bh = bias in
-    let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
-    let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
-    let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
-    add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h)
+  (** Recurrent neural network. *)
+  module RNN = struct
+    (** A recurrent neural network takes a state and a value and returns an updated state and a value. *)
+    type t = (Vector.t * Vector.t) -> (Vector.t * Vector.t)
 
-  (*
-  (** Map a function on a vector. *)
-  let map (f : float t -> float t) ((x,k) : vector) : vector =
-    let n = Array.length x in
-    let r = ref None in
-    let k i x' =
-      if !r = None then r := Some (Array.make n 0.);
-      let r = Option.get !r in
-      r.(i) <- x';
-      if i = n-1 then k r
-    in
-    let y = Array.mapi (fun i x -> f (x, k i)) x in
-    let y' = Array.map snd y in
-    Array.map fst y,
-    fun x' -> Array.iteri (fun i k -> k x'.(i)) y'
-  *)
+    (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
+    let gated_recurrent_unit ~weight ~state_weight ~bias (s,x) =
+      let wz, wr, wh = weight in
+      let uz, ur, uh = state_weight in
+      let bz, br, bh = bias in
+      let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
+      let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
+      let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
+      let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
+      y, y
+  end
 end
