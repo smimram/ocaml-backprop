@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup OCaml
-        run: sudo apt-get -y install ocaml ocaml-dune ocaml-odoc
+        run: sudo apt-get -y install ocaml ocaml-dune ocaml-odoc libpulse-ocaml-dev
 
       - name: Build
         run: dune build
