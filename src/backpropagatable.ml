@@ -99,24 +99,20 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
   (eval x, eval y), fun (d1,d2) -> update x d1; update y d2
 
-(*
-(** Operations on pairs. *)
-module Pair = struct
-  let unit_left (x : (unit * 'a) t) : 'a t =
-    let ((), x), (kl, kr) = x in
-    x, 
-end
-*)
-
-(*
-(** Apply a pair of functions to a pair. *)
-let map_pair (f : 'a t -> 'c t) (g : 'b t -> 'd t) : ('a * 'b) t -> ('c * 'd) t =
-  fun ((a,b),k) ->
-  let ar' = ref None in
-  let c, kf = f (a, fun a' -> ar' := Some a') in
-  let d, kg = g (b, fun b' -> k (Option.get !ar', b')) in
-  (c,d),(fun (c',d') -> kf c'; kg d')
-*)
+(** Unpair two values. *)
+let unpair (p : ('a * 'b) t) : 'a t * 'b t =
+  let x, y = eval p in
+  let dl = ref None in
+  let dr = ref None in
+  (* We only update when we have both values. *)
+  let update () =
+    match !dl, !dr with
+    | Some dl, Some dr -> update p (dl, dr)
+    | _ -> ()
+  in
+  let x = x, fun d -> dl := Some d; update () in
+  let y = y, fun d -> dr := Some d; update () in
+  x, y
 
 (** Operations on vectors. *)
 module Vector = struct
@@ -149,14 +145,6 @@ module Vector = struct
 
     let app f x = of_differentiable Differentiable.Vector.Linear.app @@ pair f x
   end
-
-    (*
-  (** Apply a linear transformation. *)
-  let linear w x =
-    fun (x,k) ->
-    Vector.Linear.app !w x,
-    fun d -> w := Vector.Linear.mapi (fun i j w -> w +. d.(j) *. x.(i)) !w; k (Vector.Matrix.tapp !w d)
-    *)
 
   (** Affine layer. *)
   let affine w b x = x |> Linear.app w |> bias b
