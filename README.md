@@ -15,6 +15,11 @@ The first component is the result, and the second component is a continuation sp
 
 Functions operating on backpropagatable values are usually defined from _differentiable functions_, which are roughly pairs consisting of a function (`'a -> 'b`) and its differential (`'b -> 'a`).
 
+## Requirements
+
+- [PulseAudio](https://www.freedesktop.org/wiki/Software/PulseAudio/)
+- [ocaml-pulseaudio](https://github.com/savonet/ocaml-pulseaudio)
+
 ## See also
 
 Articles:
