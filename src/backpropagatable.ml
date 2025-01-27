@@ -15,11 +15,11 @@ let observe_descent f : 'a t -> 'a t =
 let eval (x : 'a t) = fst x
 
 (** Update according to parameter. *)
-let update (x : 'a t) d = snd x d
+let update d (x : 'a t) = snd x d
 
 (** Perform gradient climbing. *)
 let climb eta x : unit t =
-  (), fun () -> update x eta
+  (), fun () -> update eta x
 
 (** Perform gradient descent. *)
 let descent eta = climb (-.eta)
@@ -44,8 +44,8 @@ struct
     let smooth a x : E.t t =
       !x, (fun d -> x := E.add !x (E.cmul a d))
 
-    (** A reference which is averaged over n values. *)
-    let average n x : E.t t =
+    (** A reference which is cumulated over n values then smoothened. *)
+    let smooth_cumul a n x : E.t t =
       let s = Array.make n !x in
       let i = ref 0 in
       let store y =
@@ -55,7 +55,7 @@ struct
             for i = 1 to n - 1 do
               d := E.add !d s.(i)
             done;
-            let d = E.cmul (1. /. float n) !d in
+            let d = E.cmul a !d in
             x := E.add !x d;
             i := 0
           );
@@ -63,6 +63,12 @@ struct
         incr i
       in
       !x, (fun d -> store d)
+      
+      (** A reference which is averaged over n values. *)
+      let average n x = smooth_cumul (1. /. float n) n x 
+
+      (** A reference which is just cumulated over n values. *)
+      let cumul n x = smooth_cumul 1. n x
   end
 
   (** A optimized variable. *)
@@ -97,7 +103,7 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
 
 (** Pair two values. *)
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
-  (eval x, eval y), fun (d1,d2) -> update x d1; update y d2
+  (eval x, eval y), fun (d1,d2) -> update d1 x; update d2 y
 
 (** Unpair two values. *)
 let unpair (p : ('a * 'b) t) : 'a t * 'b t =
@@ -107,7 +113,7 @@ let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   (* We only update when we have both values. *)
   let update () =
     match !dl, !dr with
-    | Some dl, Some dr -> update p (dl, dr)
+    | Some dl, Some dr -> update (dl, dr) p
     | _ -> ()
   in
   let x = x, fun d -> dl := Some d; update () in
@@ -158,6 +164,7 @@ module Vector = struct
     match kind with
     | `None -> Fun.id
     | `Sigmoid -> sigmoid
+    | `Tanh -> tanh
 
   let bias_fun = bias
   let activation_fun = activation
@@ -173,19 +180,87 @@ module Vector = struct
     activation_fun activation x
 
   (** Recurrent neural network. *)
-  module RNN = struct
+  module RNN_unit = struct
     (** A recurrent neural network takes a state and a value and returns an updated state and a value. *)
-    type t = (Vector.t * Vector.t) -> (Vector.t * Vector.t)
+    type nonrec t = Vector.t t -> Vector.t t -> Vector.t t -> (Vector.t t * Vector.t t)
 
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~weight ~state_weight ~bias (s,x) =
-      let wz, wr, wh = weight in
-      let uz, ur, uh = state_weight in
-      let bz, br, bh = bias in
-      let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
-      let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
-      let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
-      let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
-      y, y
+    let gated_recurrent_unit ~weight ~state_weight ~bias = 
+      fun x s _ -> 
+        let wz, wr, wh = weight in
+        let uz, ur, uh = state_weight in
+        let bz, br, bh = bias in
+        let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
+        let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
+        let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
+        let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
+        y, y
+
+    let elman_unit ~activations ~weight ~state_weight ~bias =
+      let ah, ay = activations in
+      let wh, wy = state_weight in
+      let bh, by = bias in
+      fun x s _ ->
+        let h = 
+          add (Linear.app (Linear.var weight) x) (Linear.app (Linear.var wh) s)
+          |> bias_fun bh
+          |> activation_fun ah
+        in
+        let y = 
+          affine (Linear.var wy) by h
+          |> activation_fun ay
+        in
+        h, y
+
+    (** For Jordan, we need also the previous output *)
+    let jordan_unit ~activations ~input_weight ~output_weight ~state_weight ~bias =
+      let ast, ah, ay = activations in
+      let ws, wh, wy = state_weight in
+      let bs, bh, by = bias in
+      fun x s y ->
+        let st = 
+          add (Linear.app (Linear.var ws) s) (Linear.app (Linear.var output_weight) y)
+          |> bias_fun bs
+          |> activation_fun ast
+        in
+        let h = 
+          add (Linear.app (Linear.var input_weight) x) (Linear.app (Linear.var wh) st)
+          |> bias_fun bh
+          |> activation_fun ah
+        in
+        let yt = 
+          affine (Linear.var wy) by h
+          |> activation_fun ay 
+        in
+        st, yt
   end
+
+  (* let of_RNN_unit (r:RNN_unit.t) horizon (s:Vector.t t) (x:Vector.t t) : Vector.t t =
+    let sp, yp = r (s,x) in
+    match horizon with
+    | 0 -> x
+    | n+1 ->  *)
+
+  let fold_out (f: 'a -> 'b -> 'c -> ('b * 'c)) (l: 'a list) (s: 'b) (y: 'c): 'c list =
+    let rec go (l: 'a list): ('b * 'c * ('c list)) =
+      match l with
+      | [] -> s, y, []
+      | x::l -> 
+        let s, y, ly = go l in
+        let s, yp = f x s y in
+        s, yp, yp::ly
+      in
+    let _, _, ly = go l in
+    ly
+
+  (** Perform Backpropagation through time (kind of). *)
+  let rnn (r:RNN_unit.t) s y l = fold_out r l (var s) (var y)
+
+  let mux (x : ('a t) list) : 'a list t =
+    List.map eval x, fun d -> List.iter2 update d x
+
+  (* let map (l: 'a t list): b' t list =
+    List.map (f @@ eval) l, fun d ->  *)
+    
+
 end

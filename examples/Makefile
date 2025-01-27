@@ -9,3 +9,6 @@ sine:
 
 square:
 	@dune exec ./square.exe
+
+rnn:
+	@dune exec ./rnn.exe
