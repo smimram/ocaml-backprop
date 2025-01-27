@@ -114,6 +114,21 @@ let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   let y = y, fun d -> dr := Some d; update () in
   x, y
 
+let mux (x : ('a t) array) : 'a array t =
+  Array.map eval x, fun d -> Array.iter2 update x d
+
+let demux (p : 'a array t) : 'a t array =
+  let x = eval p in
+  let n = Array.length x in
+  let k = ref 0 in
+  let dd = Array.create_float n in
+  let update () =
+    incr k;
+    assert (!k <= n);
+    if !k = n then (update p dd)
+  in
+  Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
+
 (** Operations on vectors. *)
 module Vector = struct
   include VarMake(Vector)
