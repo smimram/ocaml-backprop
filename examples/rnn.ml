@@ -26,7 +26,7 @@ let () =
     |> net
     |> List.map (Backpropagatable.observe (fun x -> Printf.printf "value is %f\n%!" x.(0)))
     |> List.map2 squared_distance_to expected
-    |> mux
+    |> Backpropagatable.mux
     |> Backpropagatable.update error
   done;
 

@@ -5,10 +5,14 @@ let () = Random.self_init ()
 (* Let's try to learn f(x) = x². *)
 let () =
   (* Generate dataset. *)
-  let dataset = List.map (fun x -> x, x*.x) [-1.0; -0.8; -0.6; -0.4; -0.2; 0.0; 0.2; 0.4; 0.6; 0.8; 1.0] in
+  let input = [-1.0; -0.8; -0.6; -0.4; -0.2; 0.0; 0.2; 0.4; 0.6; 0.8; 1.0] in
+  let datainput = List.map (fun x -> x |> Vector.scalar |> Backpropagatable.cst) input in
+  let dataoutput = List.map (fun x -> x*.x |> Vector.scalar) input in
+  let size_dataset = 11 in
+  let size_batch = 5 in
 
   (* Train a network with one hidden layer of size 6. *)
-  let n = 6 in
+  let n = 6 in  
   let layer1 =
     let weights = ref @@ Vector.Linear.uniform 1 n in
     let bias = ref @@ Vector.zero n in
@@ -20,20 +24,21 @@ let () =
     Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   let net x = x |> layer1 |> layer2 in
-  for _ = 0 to 10_000 do
+  for _ = 0 to 2_000 do
     (* Net.fit net dataset *)
-    List.iter
-      (fun (x,y) ->
-         let y = Vector.scalar y in
-         let descent =
-           Vector.scalar x
-           |> Backpropagatable.cst
-           |> net
-           |> Backpropagatable.Vector.squared_distance_to y
-           |> Backpropagatable.descent 0.2
-         in
-         Backpropagatable.run descent
-      ) dataset
+    let rand_data = List.init size_batch (fun _ -> Random.int size_dataset) in
+    let batching l = List.map (fun n -> List.nth l n) rand_data in
+    let input_batch =  batching datainput in
+    let output_batch = batching dataoutput in 
+    let eta = List.init size_batch (fun _ -> -0.2) in
+    let descent = 
+      input_batch
+      |> Backpropagatable.batch net
+      |> List.map2 (Backpropagatable.Vector.error_fun `Euclidean) output_batch
+      |> Backpropagatable.mux
+      |> Backpropagatable.climb eta
+    in
+    Backpropagatable.run descent
   done;
 
   (* Profit. *)

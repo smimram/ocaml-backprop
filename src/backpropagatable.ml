@@ -101,6 +101,14 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
   | Nil -> s
   | Cons (x, l) -> f s x |> fold f l
 
+(** iterate over a list of updates. *)
+let mux (x : ('a t) list) : 'a list t =
+  List.map eval x, fun d -> List.iter2 update d x
+
+(** Create a batch of backpropagatables with different inputs. *)
+let batch (f: 'a t -> 'b t) (l: 'a t list): 'b t list =
+  l |> List.map f 
+
 (** Pair two values. *)
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
   (eval x, eval y), fun (d1,d2) -> update d1 x; update d2 y
@@ -166,8 +174,15 @@ module Vector = struct
     | `Sigmoid -> sigmoid
     | `Tanh -> tanh
 
+  (** Error layer *)
+  let error kind = 
+    match kind with
+    | `Euclidean -> squared_distance_to
+
   let bias_fun = bias
   let activation_fun = activation
+  let error_fun = error
+
 
   (** Neural network layer. *)
   let neural_network ?(activation=`Sigmoid) ~weights ?bias x =
@@ -202,12 +217,15 @@ module Vector = struct
       let bh, by = bias in
       fun x s _ ->
         let h = 
-          add (Linear.app (Linear.var weight) x) (Linear.app (Linear.var wh) s)
+          s
+          |> Linear.app (Linear.var wh)
+          |> add (Linear.app (Linear.var weight) x) 
           |> bias_fun bh
           |> activation_fun ah
         in
         let y = 
-          affine (Linear.var wy) by h
+          h
+          |> affine (Linear.var wy) by
           |> activation_fun ay
         in
         h, y
@@ -219,17 +237,22 @@ module Vector = struct
       let bs, bh, by = bias in
       fun x s y ->
         let st = 
-          add (Linear.app (Linear.var ws) s) (Linear.app (Linear.var output_weight) y)
+          y
+          |> Linear.app (Linear.var output_weight)
+          |> add (Linear.app (Linear.var ws) s)
           |> bias_fun bs
           |> activation_fun ast
         in
         let h = 
-          add (Linear.app (Linear.var input_weight) x) (Linear.app (Linear.var wh) st)
+          st
+          |> Linear.app (Linear.var wh)
+          |> add (Linear.app (Linear.var input_weight) x)
           |> bias_fun bh
           |> activation_fun ah
         in
         let yt = 
-          affine (Linear.var wy) by h
+          h
+          |> affine (Linear.var wy) by
           |> activation_fun ay 
         in
         st, yt
@@ -255,12 +278,6 @@ module Vector = struct
 
   (** Perform Backpropagation through time (kind of). *)
   let rnn (r:RNN_unit.t) s y l = fold_out r l (var s) (var y)
-
-  let mux (x : ('a t) list) : 'a list t =
-    List.map eval x, fun d -> List.iter2 update d x
-
-  (* let map (l: 'a t list): b' t list =
-    List.map (f @@ eval) l, fun d ->  *)
     
 
 end
