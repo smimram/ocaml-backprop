@@ -122,7 +122,12 @@ let () =
   let plot ?(shape=`Circle) (x,y) b =
     let x = x *. float window |> int_of_float in
     let y = y *. float window |> int_of_float in
-    let c = Graphics.rgb (int_of_float ((1. -. b) *. 255.)) (int_of_float (b *. 255.)) 0 in
+    let c =
+      let r = int_of_float ((1. -. b) *. 255.) in
+      let r = max 0 (min 255 r) in
+      let g = int_of_float (b *. 255.) in
+      let g = max 0 (min 255 g) in
+      Graphics.rgb r g 0 in
     Graphics.set_color c;
     match shape with
     | `Circle -> Graphics.fill_circle x y 2
