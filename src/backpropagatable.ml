@@ -114,6 +114,14 @@ let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   let y = y, fun d -> dr := Some d; update () in
   x, y
 
+(** Diagonal. *)
+let diag (x : 'a t) : ('a * 'a) t =
+  let y = eval x in
+  (y, y), fun (d1,d2) -> update (d1 +. d2) x
+
+(** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
+let dup x = unpair @@ diag x
+
 let mux (x : ('a t) array) : 'a array t =
   Array.map eval x, fun d -> Array.iter2 update d x
 
@@ -195,8 +203,12 @@ module Vector = struct
 
   (** Recurrent neural network. *)
   module RNN = struct
+    (** A {{:https://en.wikipedia.org/wiki/Recurrent_neural_network}recurrent neural network} takes a state and a value and returns a new state and a new value. *)
+    type ('s, 'a) rnn = 's t -> 'a t -> 's t * 'a t
+
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~state_weight ~weight ~bias s x =
+    let gated_recurrent_unit ~state_weight ~weight ~bias : ('s, 'a) rnn =
+      fun s x ->
       let wz, wr, wh = weight in
       let uz, ur, uh = state_weight in
       let bz, br, bh = bias in
@@ -204,10 +216,12 @@ module Vector = struct
       let r = sigmoid @@ add (add (Linear.app wr x) (Linear.app ur s)) br in
       let h = tanh @@ add (add (Linear.app wh x) (Linear.app uh (hadamard r s))) bh in
       let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
-      y
+      y, y
 
-    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory} Long short-term memory} or LSTM layer. *)
-    let long_short_term_memory ~state_weight ~weight ~bias (c,h) x =
+    (*
+    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. *)
+    let long_short_term_memory ~state_weight ~weight ~bias : ('s, 'a) rnn =
+      fun (c,h) x ->
       let wf, wi, wo, wc = weight in
       let uf, ui, uo, uc = state_weight in
       let bf, bi, bo, bc = bias in
@@ -217,13 +231,17 @@ module Vector = struct
       let i = sigmoid @@ add (add (Linear.app wi x) (Linear.app ui h)) bi in
       (* Output *)
       let o = sigmoid @@ add (add (Linear.app wo x) (Linear.app uo h)) bo in
+      (* Candidate cell state. *)
       let c' = sigmoid @@ add (add (Linear.app wc x) (Linear.app uc h)) bc in
+      (* Cell state. *)
       let c = add (hadamard f c) (hadamard i c') in
+      (* Hidden state. *)
       let h = hadamard o (sigmoid c) in
-      (c,h)
+      (c,h), h
+       *)
 
     (** Unfold an RNN so that updating is done after n steps. *)
     let unfold f (s0 : Vector.t t) (x : Vector.t array) =
-      Array.fold_left_map f s0 x
+      snd @@ Array.fold_left_map f s0 x
   end
 end
