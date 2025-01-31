@@ -122,6 +122,7 @@ module Matrix = struct
     let vector = init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
     { rows; cols; vector }
 
+  (** Random matrix. *)
   let uniform ?(min=(-1.)) ?(max=1.) rows cols =
     let d = max -. min in
     init rows cols (fun _ _ -> Random.float d +. min)

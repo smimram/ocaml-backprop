@@ -1,0 +1,4 @@
+(executable
+ (public_name moons)
+ (libraries backprop graphics)
+)
