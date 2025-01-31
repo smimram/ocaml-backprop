@@ -95,19 +95,14 @@ let sin = of_differentiable Differentiable.sin
 (** Square. *)
 let square = of_differentiable Differentiable.square
 
+(** Sum of two floats *)
+let add = of_differentiable Differentiable.add
+
 (** Fold a function over a series of inputs. *)
 let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
   match l () with
   | Nil -> s
   | Cons (x, l) -> f s x |> fold f l
-
-(** iterate over a list of updates. *)
-let mux (x : ('a t) list) : 'a list t =
-  List.map eval x, fun d -> List.iter2 update d x
-
-(** Create a batch of backpropagatables with different inputs. *)
-let batch (f: 'a t -> 'b t) (l: 'a t list): 'b t list =
-  l |> List.map f 
 
 (** Pair two values. *)
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
@@ -168,11 +163,14 @@ module Vector = struct
 
   let tanh = of_differentiable Differentiable.Vector.tanh
 
+  let relu = of_differentiable Differentiable.Vector.relu
+
   let activation kind =
     match kind with
     | `None -> Fun.id
     | `Sigmoid -> sigmoid
     | `Tanh -> tanh
+    | `Relu -> relu
 
   (** Error layer *)
   let error kind = 
@@ -258,11 +256,6 @@ module Vector = struct
         st, yt
   end
 
-  (* let of_RNN_unit (r:RNN_unit.t) horizon (s:Vector.t t) (x:Vector.t t) : Vector.t t =
-    let sp, yp = r (s,x) in
-    match horizon with
-    | 0 -> x
-    | n+1 ->  *)
 
   let fold_out (f: 'a -> 'b -> 'c -> ('b * 'c)) (l: 'a list) (s: 'b) (y: 'c): 'c list =
     let rec go (l: 'a list): ('b * 'c * ('c list)) =
@@ -279,5 +272,34 @@ module Vector = struct
   (** Perform Backpropagation through time (kind of). *)
   let rnn (r:RNN_unit.t) s y l = fold_out r l (var s) (var y)
     
+
+end
+
+module List = struct
+
+  (** iterate over a list of updates. *)
+  let mux (x : ('a t) list) : 'a list t =
+    List.map eval x, fun d -> List.iter2 update d x
+  
+  (** Create a batch of backpropagatables with different inputs. *)
+  let batch (f: 'a t -> 'b t) (l: 'a t list): 'b t list =
+    l |> List.map f 
+
+  let lift_error kind expected =
+    List.map2 (Vector.error_fun kind) expected
+
+  let average l =
+    let n = float (List.length l) in
+    let s = List.fold_left (fun x y -> add (pair x y)) (cst 0.) l in
+    (eval s) /. n, fun d -> update (d /. n) s
+
+  let error kind expected predicted =
+    match kind with 
+    | `MSE -> 
+      predicted
+      |> lift_error `Euclidean expected
+      |> average
+
+  let update error l = l |> mux |> update error
 
 end

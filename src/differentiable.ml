@@ -63,6 +63,10 @@ let square = of_derivable Derivable.square
 (** The sine function. *)
 let sin = of_derivable Derivable.sin
 
+(** Sum of two floats. *)
+let add: (float * float, float) t =
+  fun (x,y) -> x+.y, fun d -> d, d
+
 (*
 (** Functions operating on pairs. *)
 module Product = struct
@@ -122,4 +126,7 @@ module Vector = struct
 
   (** Pointwise hyperbolic tangent. *)
   let tanh = map tanh
+
+  (** Pointwise relu. *)
+  let relu = map relu
 end

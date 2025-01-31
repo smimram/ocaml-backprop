@@ -33,9 +33,9 @@ let () =
     let output_batch = batching dataoutput in 
     let descent = 
       input_batch
-      |> Backpropagatable.batch net
+      |> Backpropagatable.List.batch net
       |> List.map2 (Backpropagatable.Vector.error_fun `Euclidean) output_batch
-      |> Backpropagatable.mux
+      |> Backpropagatable.List.mux
       |> Backpropagatable.climb eta
     in
     Backpropagatable.run descent
