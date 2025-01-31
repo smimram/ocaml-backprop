@@ -19,6 +19,8 @@ let dim (x:t) = Array.length x
 
 let scalar x : t = [|x|]
 
+let pair (x,y) : t = [|x;y|]
+
 let to_scalar (x:t) =
   assert (dim x = 1);
   x.(0)
