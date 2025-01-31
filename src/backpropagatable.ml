@@ -189,18 +189,35 @@ module Vector = struct
 
   (** Recurrent neural network. *)
   module RNN = struct
-    (** A recurrent neural network takes a state and a value and returns an updated state and a value. *)
-    type t = (Vector.t * Vector.t) -> (Vector.t * Vector.t)
-
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~weight ~state_weight ~bias (s,x) =
+    let gated_recurrent_unit ~state_weight ~weight ~bias s x =
       let wz, wr, wh = weight in
       let uz, ur, uh = state_weight in
       let bz, br, bh = bias in
-      let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
-      let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
-      let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
+      let z = sigmoid @@ add (add (Linear.app wz x) (Linear.app uz s)) bz in
+      let r = sigmoid @@ add (add (Linear.app wr x) (Linear.app ur s)) br in
+      let h = tanh @@ add (add (Linear.app wh x) (Linear.app uh (hadamard r s))) bh in
       let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
-      y, y
+      y
+
+    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory} Long short-term memory} or LSTM layer. *)
+    let long_short_term_memory ~state_weight ~weight ~bias (c,h) x =
+      let wf, wi, wo, wc = weight in
+      let uf, ui, uo, uc = state_weight in
+      let bf, bi, bo, bc = bias in
+      (* Forget *)
+      let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf h)) bf in
+      (* Input *)
+      let i = sigmoid @@ add (add (Linear.app wi x) (Linear.app ui h)) bi in
+      (* Output *)
+      let o = sigmoid @@ add (add (Linear.app wo x) (Linear.app uo h)) bo in
+      let c' = sigmoid @@ add (add (Linear.app wc x) (Linear.app uc h)) bc in
+      let c = add (hadamard f c) (hadamard i c') in
+      let h = hadamard o (sigmoid c) in
+      (c,h)
+
+    (** Unfold an RNN so that updating is done after n steps. *)
+    let unfold f (s0 : Vector.t t) (x : Vector.t array) =
+      Array.fold_left_map f s0 x
   end
 end

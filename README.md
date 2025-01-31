@@ -18,7 +18,7 @@ Functions operating on backpropagatable values are usually defined from _differe
 ## Requirements
 
 - [PulseAudio](https://www.freedesktop.org/wiki/Software/PulseAudio/)
-- [ocaml-pulseaudio](https://github.com/savonet/ocaml-pulseaudio)
+- [ocaml-pulseaudio](https://github.com/savonet/ocaml-pulseaudio) for the guitar-amp example
 
 ## See also
 
@@ -32,3 +32,10 @@ Articles:
 Libraries:
 
 - [backprop Haskell library](https://backprop.jle.im/)
+
+More libraries in OCaml:
+
+- [OWL](https://ocaml.xyz/)
+- [ocannl](https://github.com/ahrefs/ocannl)
+- [torch](https://github.com/janestreet/torch)
+- [tensorflow](https://github.com/LaurentMazare/tensorflow-ocaml)
