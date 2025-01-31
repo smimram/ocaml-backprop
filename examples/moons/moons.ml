@@ -4,7 +4,7 @@ open Backprop
 let samples = 200
 
 (** Number of training steps. *)
-let steps = 100
+let steps = 50
 
 (** Kind of activation for the net. *)
 let activation = `ReLU
