@@ -2,3 +2,8 @@
  (public_name moons)
  (libraries backprop graphics)
 )
+
+(rule
+ (alias runtest)
+ (action (run ./moons.exe))
+)
