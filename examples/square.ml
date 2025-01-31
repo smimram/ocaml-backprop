@@ -10,6 +10,7 @@ let () =
   let dataoutput = List.map (fun x -> x*.x |> Vector.scalar) input in
   let size_dataset = 11 in
   let size_batch = 5 in
+  let eta = List.init size_batch (fun _ -> -0.2) in
 
   (* Train a network with one hidden layer of size 6. *)
   let n = 6 in  
@@ -30,7 +31,6 @@ let () =
     let batching l = List.map (fun n -> List.nth l n) rand_data in
     let input_batch =  batching datainput in
     let output_batch = batching dataoutput in 
-    let eta = List.init size_batch (fun _ -> -0.2) in
     let descent = 
       input_batch
       |> Backpropagatable.batch net
