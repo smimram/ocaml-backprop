@@ -18,7 +18,7 @@ module List = struct
 end
 
 let moons =
-  let samples = 200 in
+  let samples = 100 in
   let data = ref [] in
   for _ = 1 to samples do
     let a = Random.float Float.pi in
@@ -40,37 +40,44 @@ let net =
   let layer1 =
     let weights = ref @@ Vector.Linear.uniform 2 16 in
     let bias = ref @@ Vector.zero 16 in
-    Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   let layer2 =
     let weights = ref @@ Vector.Linear.uniform 16 16 in
     let bias = ref @@ Vector.zero 16 in
-    Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   let layer3 =
     let weights = ref @@ Vector.Linear.uniform 16 1 in
     let bias = ref @@ Vector.zero 1 in
-    Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   fun x -> Vector.pair x |> Backpropagatable.cst |> layer1 |> layer2 |> layer3
 
+let predict p =
+  net p
+  |> Backpropagatable.eval
+  |> Vector.to_scalar
+
+let predict_normalized p =
+  let x = predict p in
+  if x >= 0.5 then 1. else 0.
+
 let train () =
-  let steps = 100 in
+  let steps = 700 in
   for step = 0 to steps - 1 do
+    let rate = 1. -. 0.9 *. float step /. float steps in
     List.iter
       (fun (p,b) ->
          let out =
            p
            |> net
            |> Backpropagatable.Vector.squared_distance_to (Vector.scalar b)
-           |> Backpropagatable.descent 0.1
+           |> Backpropagatable.descent rate
          in
          Backpropagatable.run out
       ) (List.shuffle moons);
-    let predict p =
-      net p |> Backpropagatable.eval |> Vector.to_scalar |> (fun x -> if x >= 0.5 then 1. else 0.)
-    in
-    let acc = (float @@ List.count (fun (p,b) -> predict p = b) moons) /. float (List.length moons) *. 100. in
+    let acc = (float @@ List.count (fun (p,b) -> predict_normalized p = b) moons) /. float (List.length moons) *. 100. in
     Printf.printf "Step %d, accuracy: %.00f%%\n%!" step acc
   done
 
@@ -84,12 +91,14 @@ let () =
     "moons [options]";
   Random.self_init ();
   let window = 500 in
-  let plot (x,y) b =
+  let plot ?(shape=`Circle) (x,y) b =
     let x = x *. float window |> int_of_float in
     let y = y *. float window |> int_of_float in
     let c = Graphics.rgb (int_of_float ((1. -. b) *. 255.)) (int_of_float (b *. 255.)) 0 in
     Graphics.set_color c;
-    Graphics.fill_circle x y 2
+    match shape with
+    | `Circle -> Graphics.fill_circle x y 2
+    | `Square -> Graphics.fill_rect (x-1) (y-1) 2 2
   in
   if !display then
     (
@@ -99,4 +108,14 @@ let () =
     );
   train ();
   if !display then
-    Graphics.loop_at_exit [Button_down; Key_pressed] (fun _ -> raise Exit)
+    (
+      let n = 10 in
+      for x = 0 to n do
+        for y = 0 to n do
+          let x = float x /. float n in
+          let y = float y /. float n in
+          plot ~shape:`Square (x,y) (predict (x,y))
+        done
+      done;
+      Graphics.loop_at_exit [Button_down; Key_pressed] (fun _ -> raise Exit)
+    )
