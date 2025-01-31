@@ -145,6 +145,7 @@ let () =
       Graphics.resize_window window window;
       List.iter (fun ((x,y),b) -> plot (x,y) b) moons;
     );
-  train ~update:plot_net ();
+  let update = if !display then plot_net else fun () -> () in
+  train ~update ();
   if !display then
     Graphics.loop_at_exit [Button_down; Key_pressed] (fun _ -> raise Exit)
