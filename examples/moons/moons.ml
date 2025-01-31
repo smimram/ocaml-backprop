@@ -25,17 +25,17 @@ let net =
   let layer1 =
     let weights = ref @@ Vector.Linear.uniform 2 16 in
     let bias = ref @@ Vector.zero 16 in
-    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
   in
   let layer2 =
     let weights = ref @@ Vector.Linear.uniform 16 16 in
     let bias = ref @@ Vector.zero 16 in
-    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+    Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
   in
   let layer3 =
-    let weights = ref @@ Vector.Linear.uniform 16 2 in
-    let bias = ref @@ Vector.zero 2 in
-    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+    let weights = ref @@ Vector.Linear.uniform 16 1 in
+    let bias = ref @@ Vector.zero 1 in
+    Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
   in
   fun x -> x |> layer1 |> layer2 |> layer3
 
@@ -58,12 +58,12 @@ let () =
   let plot (x,y) b =
     let x = x *. float window |> int_of_float in
     let y = y *. float window |> int_of_float in
-    let c = Graphics.rgb (int_of_float (b *. 255.)) (int_of_float ((1. -. b) *. 255.)) 0 in
+    let c = Graphics.rgb (int_of_float ((1. -. b) *. 255.)) (int_of_float (b *. 255.)) 0 in
     Graphics.set_color c;
     Graphics.fill_circle x y 2
   in
   Graphics.open_graph "";
   Graphics.resize_window window window;
   List.iter (fun ((x,y),b) -> plot (x,y) b) moons;
-  (* train (); *)
+  train ();
   Graphics.loop_at_exit [Button_down; Key_pressed] (fun _ -> raise Exit)
