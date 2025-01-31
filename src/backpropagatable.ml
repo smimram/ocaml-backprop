@@ -122,14 +122,19 @@ let diag (x : 'a t) : ('a * 'a) t =
 (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
 let dup x = unpair @@ diag x
 
+let drop_gen z x = update z x
+
+(** Values of this type are {i linear}. This operator must be used when a value is never used. *)
+let drop = drop_gen 0.
+
 let mux (x : ('a t) array) : 'a array t =
   Array.map eval x, fun d -> Array.iter2 update d x
 
-let demux (p : 'a array t) : 'a t array =
+let demux_gen z (p : 'a array t) : 'a t array =
   let x = eval p in
   let n = Array.length x in
   let k = ref 0 in
-  let dd = Array.create_float n in
+  let dd = Array.make n z in
   let update () =
     incr k;
     assert (!k <= n);
@@ -137,9 +142,18 @@ let demux (p : 'a array t) : 'a t array =
   in
   Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
 
+let demux = demux_gen 0.
+
 (** Operations on vectors. *)
 module Vector = struct
   include VarMake(Vector)
+
+  (* TODO: we could have a functor to share this definition with above *)
+  let diag x : (Vector.t * Vector.t) t =
+    let y = eval x in
+    (y, y), fun (d1,d2) -> update (Vector.add d1 d2) x
+
+  let dup x = unpair @@ diag x
 
   (** Add a constant. *)
   let cadd a = of_differentiable (Differentiable.Vector.cadd a)
@@ -207,7 +221,7 @@ module Vector = struct
     type ('s, 'a) rnn = 's t -> 'a t -> 's t * 'a t
 
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~state_weight ~weight ~bias : ('s, 'a) rnn =
+    let gated_recurrent_unit ~state_weight ~weight ~bias : (Vector.t, Vector.t) rnn =
       fun s x ->
       let wz, wr, wh = weight in
       let uz, ur, uh = state_weight in
@@ -218,10 +232,10 @@ module Vector = struct
       let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
       y, y
 
-    (*
     (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. *)
-    let long_short_term_memory ~state_weight ~weight ~bias : ('s, 'a) rnn =
-      fun (c,h) x ->
+    let long_short_term_memory ~state_weight ~weight ~bias : (Vector.t * Vector.t, Vector.t) rnn =
+      fun ch x ->
+      let c, h = unpair ch in
       let wf, wi, wo, wc = weight in
       let uf, ui, uo, uc = state_weight in
       let bf, bi, bo, bc = bias in
@@ -237,11 +251,17 @@ module Vector = struct
       let c = add (hadamard f c) (hadamard i c') in
       (* Hidden state. *)
       let h = hadamard o (sigmoid c) in
-      (c,h), h
-       *)
+      let h1, h2 = dup h in
+      let ch = pair c h1 in
+      ch, h2
 
     (** Unfold an RNN so that updating is done after n steps. *)
-    let unfold f (s0 : Vector.t t) (x : Vector.t array) =
-      snd @@ Array.fold_left_map f s0 x
+    let unfold (f : (Vector.t, Vector.t) rnn) (s0 : Vector.t t) (x : Vector.t t list) =
+      let f s x = fst (f s x) in
+      List.fold_left f s0 x
+
+    (** Apply RNN in bulk mode, to an array of input values at once. *)
+    let bulk (f : (Vector.t, Vector.t) rnn) (s0 : Vector.t t) (x : Vector.t t array) =
+      x |> Array.fold_left_map f s0 |> snd |> mux
   end
 end
