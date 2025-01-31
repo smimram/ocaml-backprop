@@ -15,11 +15,11 @@ let observe_descent f : 'a t -> 'a t =
 let eval (x : 'a t) = fst x
 
 (** Update according to parameter. *)
-let update (x : 'a t) d = snd x d
+let update d (x : 'a t) = snd x d
 
 (** Perform gradient climbing. *)
 let climb eta x : unit t =
-  (), fun () -> update x eta
+  (), fun () -> update eta x
 
 (** Perform gradient descent. *)
 let descent eta = climb (-.eta)
@@ -97,7 +97,7 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
 
 (** Pair two values. *)
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
-  (eval x, eval y), fun (d1,d2) -> update x d1; update y d2
+  (eval x, eval y), fun (d1,d2) -> update d1 x; update d2 y
 
 (** Unpair two values. *)
 let unpair (p : ('a * 'b) t) : 'a t * 'b t =
@@ -107,7 +107,7 @@ let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   (* We only update when we have both values. *)
   let update () =
     match !dl, !dr with
-    | Some dl, Some dr -> update p (dl, dr)
+    | Some dl, Some dr -> update (dl, dr) p
     | _ -> ()
   in
   let x = x, fun d -> dl := Some d; update () in
@@ -115,7 +115,7 @@ let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   x, y
 
 let mux (x : ('a t) array) : 'a array t =
-  Array.map eval x, fun d -> Array.iter2 update x d
+  Array.map eval x, fun d -> Array.iter2 update d x
 
 let demux (p : 'a array t) : 'a t array =
   let x = eval p in
@@ -125,7 +125,7 @@ let demux (p : 'a array t) : 'a t array =
   let update () =
     incr k;
     assert (!k <= n);
-    if !k = n then (update p dd)
+    if !k = n then (update dd p)
   in
   Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
 
