@@ -53,7 +53,9 @@ let hadamard x y = map2 ( *. ) x y
 
 let init n f : t = Array.init n f
 
-let zero n = init n (fun _ -> 0.)
+let fill n x : t = Array.init n (fun _ -> x)
+
+let zero n = fill n 0.
 
 (** Create a uniformly distributed random vector. *)
 let uniform ~min ~max n =

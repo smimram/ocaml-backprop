@@ -4,7 +4,11 @@ open Backprop
 let samples = 200
 
 (** Number of training steps. *)
-let steps = 700
+let steps = 100
+
+(** Kind of activation for the net. *)
+let activation = `ReLU
+(* let activation = `Sigmoid *)
 
 let () = Printexc.record_backtrace true
 
@@ -42,22 +46,41 @@ let moons =
   !data
 
 let net =
-  let layer1 =
-    let weights = ref @@ Vector.Linear.uniform 2 16 in
-    let bias = ref @@ Vector.zero 16 in
-    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
-  in
-  let layer2 =
-    let weights = ref @@ Vector.Linear.uniform 16 16 in
-    let bias = ref @@ Vector.zero 16 in
-    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
-  in
-  let layer3 =
-    let weights = ref @@ Vector.Linear.uniform 16 1 in
-    let bias = ref @@ Vector.zero 1 in
-    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
-  in
-  fun x -> Vector.pair x |> Backpropagatable.cst |> layer1 |> layer2 |> layer3
+  match activation with
+  | `Sigmoid ->
+    let layer1 =
+      let weights = ref @@ Vector.Linear.uniform 2 16 in
+      let bias = ref @@ Vector.zero 16 in
+      Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+    in
+    let layer2 =
+      let weights = ref @@ Vector.Linear.uniform 16 16 in
+      let bias = ref @@ Vector.zero 16 in
+      Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+    in
+    let layer3 =
+      let weights = ref @@ Vector.Linear.uniform 16 1 in
+      let bias = ref @@ Vector.zero 1 in
+      Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+    in
+    fun x -> Vector.pair x |> Backpropagatable.cst |> layer1 |> layer2 |> layer3
+  | `ReLU ->
+    let layer1 =
+      let weights = ref @@ Vector.Linear.uniform 2 16 in
+      let bias = ref @@ Vector.fill 16 0. in
+      Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+    in
+    let layer2 =
+      let weights = ref @@ Vector.Linear.uniform 16 16 in
+      let bias = ref @@ Vector.fill 16 0. in
+      Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+    in
+    let layer3 =
+      let weights = ref @@ Vector.Linear.uniform 16 1 in
+      let bias = ref @@ Vector.fill 1 0. in
+      Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+    in
+    fun (x,y) -> Vector.pair (x,y) |> Backpropagatable.cst |> layer1 |> layer2 |> layer3
 
 let predict p =
   net p
@@ -68,9 +91,9 @@ let predict_normalized p =
   let x = predict p in
   if x >= 0.5 then 1. else 0.
 
-let train () =
+let train ?(update=fun () -> ()) () =
   for step = 0 to steps - 1 do
-    let rate = 1. -. 0.9 *. float step /. float steps in
+    let rate = (1. -. 0.9 *. float step /. float steps) /. 100. in
     List.iter
       (fun (p,b) ->
          let out =
@@ -82,7 +105,8 @@ let train () =
          Backpropagatable.run out
       ) (List.shuffle moons);
     let acc = (float @@ List.count (fun (p,b) -> predict_normalized p = b) moons) /. float (List.length moons) *. 100. in
-    Printf.printf "Step %d, accuracy: %.00f%%\n%!" step acc
+    Printf.printf "Step %d, accuracy: %.00f%%\n%!" step acc;
+    update ()
   done
 
 let () =
@@ -104,16 +128,8 @@ let () =
     | `Circle -> Graphics.fill_circle x y 2
     | `Square -> Graphics.fill_rect (x-1) (y-1) 2 2
   in
-  if !display then
-    (
-      Graphics.open_graph "";
-      Graphics.resize_window window window;
-      List.iter (fun ((x,y),b) -> plot (x,y) b) moons;
-    );
-  train ();
-  if !display then
-    (
-      let n = 10 in
+  let plot_net () =
+    let n = 10 in
       for x = 0 to n do
         for y = 0 to n do
           let x = float x /. float n in
@@ -121,5 +137,14 @@ let () =
           plot ~shape:`Square (x,y) (predict (x,y))
         done
       done;
-      Graphics.loop_at_exit [Button_down; Key_pressed] (fun _ -> raise Exit)
-    )
+      Graphics.synchronize ()
+  in
+  if !display then
+    (
+      Graphics.open_graph "";
+      Graphics.resize_window window window;
+      List.iter (fun ((x,y),b) -> plot (x,y) b) moons;
+    );
+  train ~update:plot_net ();
+  if !display then
+    Graphics.loop_at_exit [Button_down; Key_pressed] (fun _ -> raise Exit)

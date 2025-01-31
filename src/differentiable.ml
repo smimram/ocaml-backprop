@@ -123,5 +123,6 @@ module Vector = struct
   (** Pointwise hyperbolic tangent. *)
   let tanh = map tanh
 
+  (** Pointwise rectified linear unit. *)
   let relu = map relu
 end

@@ -169,6 +169,7 @@ module Vector = struct
 
   let tanh = of_differentiable Differentiable.Vector.tanh
 
+  (** Rectified linear unit. *)
   let relu = of_differentiable Differentiable.Vector.relu
 
   let activation kind =
