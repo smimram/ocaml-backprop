@@ -122,27 +122,23 @@ let diag (x : 'a t) : ('a * 'a) t =
 (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
 let dup x = unpair @@ diag x
 
-let drop_gen z x = update z x
-
 (** Values of this type are {i linear}. This operator must be used when a value is never used. *)
-let drop = drop_gen 0.
+let drop x = update 0. x
 
 let mux (x : ('a t) array) : 'a array t =
   Array.map eval x, fun d -> Array.iter2 update d x
 
-let demux_gen z (p : 'a array t) : 'a t array =
+let demux (p : 'a array t) : 'a t array =
   let x = eval p in
   let n = Array.length x in
   let k = ref 0 in
-  let dd = Array.make n z in
+  let dd = Array.make n 0. in
   let update () =
     incr k;
     assert (!k <= n);
     if !k = n then (update dd p)
   in
   Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
-
-let demux = demux_gen 0.
 
 (** Operations on vectors. *)
 module Vector = struct
