@@ -186,7 +186,9 @@ module Vector = struct
     let x =
       match bias with
       | None -> x
-      | Some bias -> bias_fun bias x
+      | Some bias ->
+        assert (Vector.dim !bias = Vector.Linear.tgt !weights);
+        bias_fun bias x
     in
     activation_fun activation x
 
