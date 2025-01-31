@@ -169,9 +169,12 @@ module Vector = struct
 
   let tanh = of_differentiable Differentiable.Vector.tanh
 
+  let relu = of_differentiable Differentiable.Vector.relu
+
   let activation kind =
     match kind with
     | `None -> Fun.id
+    | `ReLU -> relu
     | `Sigmoid -> sigmoid
 
   let bias_fun = bias
