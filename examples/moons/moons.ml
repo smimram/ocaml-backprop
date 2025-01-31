@@ -1,5 +1,11 @@
 open Backprop
 
+(** Number of samples per moon. *)
+let samples = 200
+
+(** Number of training steps. *)
+let steps = 700
+
 let () = Printexc.record_backtrace true
 
 module List = struct
@@ -18,7 +24,6 @@ module List = struct
 end
 
 let moons =
-  let samples = 100 in
   let data = ref [] in
   for _ = 1 to samples do
     let a = Random.float Float.pi in
@@ -64,7 +69,6 @@ let predict_normalized p =
   if x >= 0.5 then 1. else 0.
 
 let train () =
-  let steps = 700 in
   for step = 0 to steps - 1 do
     let rate = 1. -. 0.9 *. float step /. float steps in
     List.iter
