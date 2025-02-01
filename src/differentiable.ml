@@ -50,6 +50,7 @@ let sigmoid : (float, float) t =
   (* Slightly more efficient implementation than of_derivable Derivable.sigmoid since we compute y once. *)
   fun x -> let y = sigmoid x in y, fun d -> d *. y *. (1. -. y)
 
+
 (** Hyperbolic tangent. *)
 (* TODO: could be optimized like sigmoid. *)
 let tanh = of_derivable Derivable.tanh
@@ -74,11 +75,22 @@ module Product = struct
 end
 *)
 
+module Linear = struct
+  (** Apply a linear function to a vector. *)
+  let app : (Vector.Matrix.t * Vector.t, Vector.t) t =
+    fun (m, x) -> Vector.Linear.app m x, fun d -> Vector.Linear.mapi (fun i j _ -> x.(i) *. d.(j)) m, Vector.Matrix.tapp m d
+end
+
 (** Functions operating on vectors. *)
 module Vector = struct
+  let to_scalar : (Vector.t, float) t =
+    fun x -> Vector.to_scalar x, fun d -> Array.make 1 d
+
+  (** Add a constant. *)
   let cadd a : (Vector.t, Vector.t) t =
     fun x -> Vector.cadd a x, fun d -> d
 
+  (** Multiply by a constant. *)
   let cmul a : (Vector.t, Vector.t) t =
     fun x -> Vector.cmul a x, fun d -> Vector.cmul a d
 
@@ -110,12 +122,6 @@ module Vector = struct
       let y = Array.map f x in
       Array.map fst y,
       fun d -> Array.map2 (fun (_,f) d -> f d) y d
-
-  module Linear = struct
-    (** Apply a linear function to a vector. *)
-    let app : (Vector.Matrix.t * Vector.t, Vector.t) t =
-      fun (m, x) -> Vector.Linear.app m x, fun d -> Vector.Linear.mapi (fun i j _ -> x.(i) *. d.(j)) m, Vector.Matrix.tapp m d
-  end
 
   (** Pointwise sigmoid. *)
   let sigmoid = map sigmoid

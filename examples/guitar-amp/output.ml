@@ -21,6 +21,6 @@ let create ~samplerate ~channels ?(filename="") ?(soundcard=false) () =
   in
   { file; soundcard }
 
-let sample out x =
+let samples out x =
   Option.iter (fun wav -> WAV.Writer.samples_float wav x) out.file;
   Option.iter (fun pa -> Pulseaudio.Simple.write pa (Array.map (fun x -> [|x|]) x) 0 1) out.soundcard

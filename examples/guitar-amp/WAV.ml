@@ -39,14 +39,13 @@ let samplerate wav = wav.samplerate
 
 let samples wav = wav.length / (wav.channels * wav.samplesize / 8)
 
-let sample wav =
-  Array.init wav.channels (fun _ -> String.get_int16_le (really_input_string wav.ic 2) 0)
+let sample wav = Array.init wav.channels (fun _ -> String.get_int16_le (really_input_string wav.ic 2) 0)
 
-let sample_float wav =
-  sample wav |> Array.map (fun x -> float x /. 32768.)
+let sample_float wav = sample wav |> Array.map (fun x -> float x /. 32768.)
 
-let sample_mean_float wav =
-  sample_float wav |> Array.fold_left (+.) 0. |> fun x -> x /. float (channels wav)
+let samples_float wav n = Array.init n (fun _ -> sample_float wav)
+
+let sample_mean_float wav = sample_float wav |> Array.fold_left (+.) 0. |> fun x -> x /. float (channels wav)
 
 module Writer = struct
   type t = out_channel

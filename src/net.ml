@@ -145,7 +145,7 @@ let demux (p : 'a array t) : 'a t array =
 module Linear = struct
   include VarMake (Vector.Linear)
 
-  let app f x = of_differentiable Differentiable.Vector.Linear.app @@ pair f x
+  let app f x = of_differentiable Differentiable.Linear.app @@ pair f x
 end
 
 (** Operations on vectors. *)
@@ -159,7 +159,17 @@ module Vector = struct
 
   let dup x = unpair @@ diag x
 
+  (** Should be called when a vector is not used. *)
   let drop x = update (Vector.zero (Array.length (eval x))) x
+
+  (** Drop a pair of vectors. *)
+  let drop_pair x =
+    let v1, v2 = eval x in
+    let z1 = Vector.zero (Array.length v1) in
+    let z2 = Vector.zero (Array.length v2) in
+    update (z1, z2) x
+
+  let to_scalar = of_differentiable Differentiable.Vector.to_scalar
 
   (** Add a constant. *)
   let cadd a = of_differentiable (Differentiable.Vector.cadd a)
@@ -217,10 +227,10 @@ module Vector = struct
   (** Recurrent neural network. *)
   module RNN = struct
     (** A {{:https://en.wikipedia.org/wiki/Recurrent_neural_network}recurrent neural network} takes a state and a value and returns a new state and a new value. *)
-    type ('s, 'a) rnn = 's t -> 'a t -> 's t * 'a t
+    type ('s, 'a, 'b) rnn = 's t -> 'a t -> 's t * 'b t
 
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~state_weight ~weight ~bias : (Vector.t, Vector.t) rnn =
+    let gated_recurrent_unit ~state_weight ~weight ~bias : (Vector.t, Vector.t, Vector.t) rnn =
       fun s x ->
       let wz, wr, wh = weight in
       let uz, ur, uh = state_weight in
@@ -241,7 +251,7 @@ module Vector = struct
       dup y
 
     (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. In terms of dimensios, the state weights are from hidden to hidden, the weights are from inputs to hidden, and the bias are for hidden. *)
-    let long_short_term_memory ~weight_state ~weight ~bias : (Vector.t * Vector.t, Vector.t) rnn =
+    let long_short_term_memory ~weight_state ~weight ~bias : (Vector.t * Vector.t, Vector.t, Vector.t) rnn =
       fun ch x ->
       let c, h = unpair ch in
       let wf, wi, wo, wc = weight in
@@ -296,12 +306,12 @@ module Vector = struct
       ch, h2
 
     (** Unfold an RNN so that updating is done after n steps. *)
-    let unfold (f : (Vector.t, Vector.t) rnn) (s0 : Vector.t t) (x : Vector.t t list) =
+    let unfold (f : (Vector.t, Vector.t, Vector.t) rnn) (s0 : Vector.t t) (x : Vector.t t list) =
       let f s x = fst (f s x) in
       List.fold_left f s0 x
 
     (** Apply RNN in bulk mode, to an array of input values at once. *)
-    let bulk (f : ('s, Vector.t) rnn) (s0 : 's t) (x : Vector.t t array) =
-      x |> Array.fold_left_map f s0 |> Pair.map (Fun.id, mux)
+    let bulk (f : ('s, 'a, 'b) rnn) (s0 : 's t) (x : 'a t array) =
+      x |> Array.fold_left_map f s0 |> Pair.map_right mux
   end
 end

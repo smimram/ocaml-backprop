@@ -8,6 +8,7 @@ let () =
   let rate = ref 0.005 in
   let size = ref 20 in
   let play = ref false in
+  let bulk = 1024 in
   Arg.parse [
     "-i", Arg.Set_string source, "Input file.";
     "-s", Arg.Set_string source, "Source file.";
@@ -22,7 +23,7 @@ let () =
   if !source = "" then error "Please specify an input file.";
   let source = WAV.openfile !source in
   let _channels = WAV.channels source in
-  let _samplerate = WAV.samplerate source in
+  let samplerate = WAV.samplerate source in
   let _samples = WAV.samples source in
   if !target = "" then Printf.printf "Playing:\n" else Printf.printf "Learning:\n";
   Printf.printf "- rate: %f\n" !rate;
@@ -48,10 +49,10 @@ let () =
   else
     (
       Random.self_init ();
-      (*
       let target = WAV.openfile !target in
       let output = Output.create ~channels:1 ~samplerate ~filename:!output ~soundcard:!play () in
-      let net = Net.create (`WrightGRU !size) in
+      let net = Net.net in
+      let state = ref (Net.state ()) in
       try
         let i = ref 0 in
         ignore (Sys.signal Sys.sigint (Signal_handle (fun _ -> raise End_of_file)));
@@ -59,20 +60,18 @@ let () =
         (* let pet = preemph () in *)
         while true do
           incr i;
-          let x = (WAV.sample_float source).(0) in
-          (* computed *)
-          let yc = Net.process net x in
-          (* target *)
-          let yt = (WAV.sample_float target).(0) in
-          Output.sample output [|yc|];
-          (* Printf.printf "S: %.02f\tT: %.02f\tC: %.02f\n" x yt yc; *)
-          (* let yc = pec yc in *)
-          (* let yt = pet yt in *)
-          let d = yc -. yt in
-          Net.descent net (!rate *. d);
-          Printf.printf "\rProcessing: %2.00f%% (err: %7.04f)%!" (100. *. float !i /. float samples) d
+          let x = WAV.samples_float source bulk |> Array.map (fun x -> x.(0)) in
+          let y = WAV.samples_float target bulk |> Array.map (fun x -> x.(0)) in
+          let s', y' = net !state y x in
+          state := s';
+          Output.samples output y';
+          (* (\* Printf.printf "S: %.02f\tT: %.02f\tC: %.02f\n" x yt yc; *\) *)
+          (* (\* let yc = pec yc in *\) *)
+          (* (\* let yt = pet yt in *\) *)
+          (* let d = yc -. yt in *)
+          (* Net.descent net (!rate *. d); *)
+          (* Printf.printf "\rProcessing: %2.00f%% (err: %7.04f)%!" (100. *. float !i /. float samples) d *)
         done;
       with
       | End_of_file -> ()
-         *)
     )
