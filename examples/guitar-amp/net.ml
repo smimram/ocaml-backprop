@@ -28,4 +28,7 @@ let net =
   in
   let state = Net.cst state in
   let net = Net.Vector.RNN.long_short_term_memory ~weight_state ~weight ~bias in
-  Net.Vector.RNN.bulk net state
+  fun x ->
+    x
+    |> Array.map Net.cst
+    |> Net.Vector.RNN.bulk net state

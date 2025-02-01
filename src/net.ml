@@ -1,5 +1,7 @@
 (** Networks consist of backpropagatable functions. *)
 
+open Extlib
+
 (** The backpropagation "functor": it consists of the result of the evaluation (the primal) and a function to perform the backpropagation given the gradient. *)
 type 'a t = 'a * ('a -> unit)
 
@@ -298,6 +300,6 @@ module Vector = struct
 
     (** Apply RNN in bulk mode, to an array of input values at once. *)
     let bulk (f : ('s, Vector.t) rnn) (s0 : 's t) (x : Vector.t t array) =
-      x |> Array.fold_left_map f s0 |> snd |> mux
+      x |> Array.fold_left_map f s0 |> Pair.map (Fun.id, mux)
   end
 end
