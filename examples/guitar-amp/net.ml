@@ -27,9 +27,17 @@ let net =
     ref @@ Vector.uniform hidden_size,
     ref @@ Vector.uniform hidden_size
   in
+  (* Fully connected layer. *)
+  let fc =
+    let w = ref @@ Vector.Linear.uniform hidden_size 1 in
+    let b = ref @@ Vector.uniform hidden_size in
+    fun x ->
+      Net.Vector.to_scalar @@ Net.Vector.add (Net.Vector.var b) (Net.Linear.app (Net.Linear.var w) x)
+  in
+  (* The network. *)
   let net s x =
     Net.Vector.RNN.long_short_term_memory ~weight_state ~weight ~bias s x
-    |> Pair.map_right Net.Vector.to_scalar
+    |> Pair.map_right fc
   in
   fun state y x ->
     let state = Net.cst state in
