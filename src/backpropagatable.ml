@@ -139,6 +139,13 @@ let demux (p : 'a array t) : 'a t array =
   in
   Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
 
+(** Linear transformations. *)
+module Linear = struct
+  include VarMake (Vector.Linear)
+
+  let app f x = of_differentiable Differentiable.Vector.Linear.app @@ pair f x
+end
+
 (** Operations on vectors. *)
 module Vector = struct
   include VarMake(Vector)
@@ -170,13 +177,6 @@ module Vector = struct
 
   (** Add a bias vector which can be optimized. *)
   let bias b x = add (var b) x
-
-  (** Linear transformations. *)
-  module Linear = struct
-    include VarMake (Vector.Linear)
-
-    let app f x = of_differentiable Differentiable.Vector.Linear.app @@ pair f x
-  end
 
   (** Affine layer. *)
   let affine w b x = x |> Linear.app w |> bias b
@@ -221,13 +221,22 @@ module Vector = struct
       let wz, wr, wh = weight in
       let uz, ur, uh = state_weight in
       let bz, br, bh = bias in
+      let wz = Linear.var wz in
+      let wr = Linear.var wr in
+      let wh = Linear.var wh in
+      let uz = Linear.var uz in
+      let ur = Linear.var ur in
+      let uh = Linear.var uh in
+      let bz = var bz in
+      let br = var br in
+      let bh = var bh in
       let z = sigmoid @@ add (add (Linear.app wz x) (Linear.app uz s)) bz in
       let r = sigmoid @@ add (add (Linear.app wr x) (Linear.app ur s)) br in
       let h = tanh @@ add (add (Linear.app wh x) (Linear.app uh (hadamard r s))) bh in
       let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
-      y, y
+      dup y
 
-    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. *)
+    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. In terms of dimensios, the state weights are from hidden to hidden, the weights are from inputs to hidden, and the bias are for hidden. *)
     let long_short_term_memory ~weight_state ~weight ~bias : (Vector.t * Vector.t, Vector.t) rnn =
       fun ch x ->
       let c, h = unpair ch in
@@ -288,7 +297,7 @@ module Vector = struct
       List.fold_left f s0 x
 
     (** Apply RNN in bulk mode, to an array of input values at once. *)
-    let bulk (f : (Vector.t, Vector.t) rnn) (s0 : Vector.t t) (x : Vector.t t array) =
+    let bulk (f : ('s, Vector.t) rnn) (s0 : 's t) (x : Vector.t t array) =
       x |> Array.fold_left_map f s0 |> snd |> mux
   end
 end
