@@ -31,7 +31,7 @@ let () =
   Printf.printf "- rate: %f\n" !rate;
   if !target = "" then
     (
-      print_endline "File processing mode."
+      print_endline "File processing mode (not implemented yet)."
     ) (* TODO: process file *)
     (*
     (
@@ -69,7 +69,7 @@ let () =
           let opt = (!i * bulk / (2 * samplerate)) mod 2 = 0 in
           let x = WAV.samples_float source bulk |> Array.map (fun x -> x.(0)) in
           let y = WAV.samples_float target bulk |> Array.map (fun x -> x.(0)) in
-          let s', y' = net ~optimize:opt ~state:!state y x in
+          let s', y' = net ~optimize:opt ~state:!state ~rate:!rate y x in
           state := s';
           Output.samples output y';
           Printf.printf "\rProcessing: %d samples%!" (!i * bulk)

@@ -21,15 +21,15 @@ let net hidden_size =
     ref @@ Vector.Linear.uniform inputs hidden_size
   in
   let bias =
-    ref @@ Vector.uniform hidden_size,
-    ref @@ Vector.uniform hidden_size,
-    ref @@ Vector.uniform hidden_size,
-    ref @@ Vector.uniform hidden_size
+    ref @@ Vector.zero hidden_size,
+    ref @@ Vector.zero hidden_size,
+    ref @@ Vector.zero hidden_size,
+    ref @@ Vector.zero hidden_size
   in
   (* Fully connected layer. *)
   let fc =
     let w = ref @@ Vector.Linear.uniform hidden_size 1 in
-    let b = ref @@ Vector.uniform 1 in
+    let b = ref @@ Vector.zero 1 in
     fun x ->
       Net.Vector.to_scalar @@ Net.Vector.add (Net.Vector.var b) (Net.Linear.app (Net.Linear.var w) x)
   in
@@ -38,7 +38,7 @@ let net hidden_size =
     Net.Vector.RNN.long_short_term_memory ~weight_state ~weight ~bias s x
     |> Pair.map_right fc
   in
-  fun ~optimize ~state y x ->
+  fun ~optimize ~rate ~state y x ->
     let state = Net.cst state in
     let state, out =
       x
@@ -54,7 +54,7 @@ let net hidden_size =
         Net.Vector.drop_pair state;
         out
         |> Net.Vector.squared_distance_to y
-        |> Net.descent 0.01
+        |> Net.descent rate
         |> Net.run
       );
     s, o
