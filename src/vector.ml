@@ -58,7 +58,7 @@ let fill n x : t = Array.init n (fun _ -> x)
 let zero n = fill n 0.
 
 (** Create a uniformly distributed random vector. *)
-let uniform ~min ~max n =
+let uniform ?(min= -1.) ?(max=1.) n =
   let d = max -. min in
   init n (fun _ -> Random.float d +. min)
 
