@@ -30,7 +30,7 @@ let net =
   (* Fully connected layer. *)
   let fc =
     let w = ref @@ Vector.Linear.uniform hidden_size 1 in
-    let b = ref @@ Vector.uniform hidden_size in
+    let b = ref @@ Vector.uniform 1 in
     fun x ->
       Net.Vector.to_scalar @@ Net.Vector.add (Net.Vector.var b) (Net.Linear.app (Net.Linear.var w) x)
   in

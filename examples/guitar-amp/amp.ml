@@ -9,7 +9,7 @@ let () =
   let rate = ref 0.005 in
   let size = ref 20 in
   let play = ref false in
-  let bulk = 1024 in
+  let bulk = 16 (* 2048 *) in
   Arg.parse [
     "-i", Arg.Set_string source, "Input file.";
     "-s", Arg.Set_string source, "Source file.";
@@ -69,12 +69,7 @@ let () =
           let s', y' = net !state y x in
           state := s';
           Output.samples output y';
-          (* (\* Printf.printf "S: %.02f\tT: %.02f\tC: %.02f\n" x yt yc; *\) *)
-          (* (\* let yc = pec yc in *\) *)
-          (* (\* let yt = pet yt in *\) *)
-          (* let d = yc -. yt in *)
-          (* Net.descent net (!rate *. d); *)
-          (* Printf.printf "\rProcessing: %2.00f%% (err: %7.04f)%!" (100. *. float !i /. float samples) d *)
+          Printf.printf "\rProcessing: %d samples%!" (!i * bulk)
         done;
       with
       | End_of_file -> ()
