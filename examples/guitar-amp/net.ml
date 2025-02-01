@@ -26,6 +26,6 @@ let net =
     Vector.uniform hidden_size,
     Vector.uniform hidden_size
   in
-  let state = Backpropagatable.cst state in
-  let net = Backpropagatable.Vector.RNN.long_short_term_memory ~weight_state ~weight ~bias in
-  Backpropagatable.Vector.RNN.bulk net state
+  let state = Net.cst state in
+  let net = Net.Vector.RNN.long_short_term_memory ~weight_state ~weight ~bias in
+  Net.Vector.RNN.bulk net state

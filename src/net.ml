@@ -1,4 +1,4 @@
-(** Backpropagatable functions. *)
+(** Networks consist of backpropagatable functions. *)
 
 (** The backpropagation "functor": it consists of the result of the evaluation (the primal) and a function to perform the backpropagation given the gradient. *)
 type 'a t = 'a * ('a -> unit)

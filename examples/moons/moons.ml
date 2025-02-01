@@ -51,40 +51,40 @@ let net =
     let layer1 =
       let weights = ref @@ Vector.Linear.uniform 2 16 in
       let bias = ref @@ Vector.zero 16 in
-      Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+      Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
     in
     let layer2 =
       let weights = ref @@ Vector.Linear.uniform 16 16 in
       let bias = ref @@ Vector.zero 16 in
-      Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+      Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
     in
     let layer3 =
       let weights = ref @@ Vector.Linear.uniform 16 1 in
       let bias = ref @@ Vector.zero 1 in
-      Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+      Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
     in
-    fun x -> Vector.pair x |> Backpropagatable.cst |> layer1 |> layer2 |> layer3
+    fun x -> Vector.pair x |> Net.cst |> layer1 |> layer2 |> layer3
   | `ReLU ->
     let layer1 =
       let weights = ref @@ Vector.Linear.uniform 2 16 in
       let bias = ref @@ Vector.fill 16 0. in
-      Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+      Net.Vector.neural_network ~activation:`ReLU ~weights ~bias
     in
     let layer2 =
       let weights = ref @@ Vector.Linear.uniform 16 16 in
       let bias = ref @@ Vector.fill 16 0. in
-      Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+      Net.Vector.neural_network ~activation:`ReLU ~weights ~bias
     in
     let layer3 =
       let weights = ref @@ Vector.Linear.uniform 16 1 in
       let bias = ref @@ Vector.fill 1 0. in
-      Backpropagatable.Vector.neural_network ~activation:`ReLU ~weights ~bias
+      Net.Vector.neural_network ~activation:`ReLU ~weights ~bias
     in
-    fun (x,y) -> Vector.pair (x,y) |> Backpropagatable.cst |> layer1 |> layer2 |> layer3
+    fun (x,y) -> Vector.pair (x,y) |> Net.cst |> layer1 |> layer2 |> layer3
 
 let predict p =
   net p
-  |> Backpropagatable.eval
+  |> Net.eval
   |> Vector.to_scalar
 
 let predict_normalized p =
@@ -99,10 +99,10 @@ let train ?(update=fun () -> ()) () =
          let out =
            p
            |> net
-           |> Backpropagatable.Vector.squared_distance_to (Vector.scalar b)
-           |> Backpropagatable.descent rate
+           |> Net.Vector.squared_distance_to (Vector.scalar b)
+           |> Net.descent rate
          in
-         Backpropagatable.run out
+         Net.run out
       ) (List.shuffle moons);
     let acc = (float @@ List.count (fun (p,b) -> predict_normalized p = b) moons) /. float (List.length moons) *. 100. in
     Printf.printf "Step %d, accuracy: %.00f%%\n%!" step acc;
