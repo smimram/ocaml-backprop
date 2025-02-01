@@ -8,8 +8,9 @@ let () =
   let output = ref "output.wav" in
   let rate = ref 0.005 in
   let size = ref 20 in
+  let hidden_size = ref 4 in
   let play = ref false in
-  let bulk = 16 (* 2048 *) in
+  let bulk = 2 (* 2048 *) in
   Arg.parse [
     "-i", Arg.Set_string source, "Input file.";
     "-s", Arg.Set_string source, "Source file.";
@@ -55,8 +56,8 @@ let () =
       Random.self_init ();
       let target = WAV.openfile !target in
       let output = Output.create ~channels:1 ~samplerate ~filename:!output ~soundcard:!play () in
-      let net = Net.net in
-      let state = ref (Net.state ()) in
+      let state = ref (Net.state !hidden_size) in
+      let net = Net.net !hidden_size in
       try
         let i = ref 0 in
         ignore (Sys.signal Sys.sigint (Signal_handle (fun _ -> raise End_of_file)));
@@ -64,9 +65,11 @@ let () =
         (* let pet = preemph () in *)
         while true do
           incr i;
+          (* Stop optimizing every other two seconds to test the network. *)
+          let opt = (!i * bulk / (2 * samplerate)) mod 2 = 0 in
           let x = WAV.samples_float source bulk |> Array.map (fun x -> x.(0)) in
           let y = WAV.samples_float target bulk |> Array.map (fun x -> x.(0)) in
-          let s', y' = net !state y x in
+          let s', y' = net ~optimize:opt ~state:!state y x in
           state := s';
           Output.samples output y';
           Printf.printf "\rProcessing: %d samples%!" (!i * bulk)
