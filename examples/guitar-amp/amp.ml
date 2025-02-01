@@ -1,6 +1,7 @@
 (** Pre-emphasis for error computation. *)
 
 let () =
+  Printexc.record_backtrace true;
   let error fmt = Printf.ksprintf (fun s -> print_endline s; exit 1) fmt in
   let source = ref "" in
   let target = ref "" in
@@ -28,7 +29,9 @@ let () =
   if !target = "" then Printf.printf "Playing:\n" else Printf.printf "Learning:\n";
   Printf.printf "- rate: %f\n" !rate;
   if !target = "" then
-    () (* TODO: process file *)
+    (
+      print_endline "File processing mode."
+    ) (* TODO: process file *)
     (*
     (
       let output = Output.create ~channels ~samplerate ~filename:!output ~soundcard:!play () in
@@ -48,6 +51,7 @@ let () =
        *)
   else
     (
+      print_endline "Learning mode.";
       Random.self_init ();
       let target = WAV.openfile !target in
       let output = Output.create ~channels:1 ~samplerate ~filename:!output ~soundcard:!play () in

@@ -22,7 +22,7 @@ let scalar x : t = [|x|]
 let pair (x,y) : t = [|x;y|]
 
 let to_scalar (x:t) =
-  assert (dim x = 1);
+  if dim x <> 1 then failwith (Printf.sprintf "to_scalar: vector of dimension %d instead of 1" (dim x));
   x.(0)
 
 let map f (x:t) : t = Array.map f x
