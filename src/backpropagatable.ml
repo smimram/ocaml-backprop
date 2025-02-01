@@ -37,8 +37,7 @@ let cst x : 'a t =
 module VarMake (E: sig type t val add : t -> t -> t val cmul : float -> t -> t end) =
 struct
   module Var = struct
-    let make x : E.t t =
-      !x, (fun d -> x := E.add !x d)
+    let make x : E.t t = !x, (fun d -> x := E.add !x d)
 
     (** A smoothed reference. The first parameter controls smoothing: 1 acts like a traditional reference, 0 never updates. *)
     let smooth a x : E.t t =
@@ -229,12 +228,44 @@ module Vector = struct
       y, y
 
     (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. *)
-    let long_short_term_memory ~state_weight ~weight ~bias : (Vector.t * Vector.t, Vector.t) rnn =
+    let long_short_term_memory ~weight_state ~weight ~bias : (Vector.t * Vector.t, Vector.t) rnn =
       fun ch x ->
       let c, h = unpair ch in
       let wf, wi, wo, wc = weight in
-      let uf, ui, uo, uc = state_weight in
+      let uf, ui, uo, uc = weight_state in
       let bf, bi, bo, bc = bias in
+      let ni = Vector.Linear.src !wf in
+      let nh = Vector.Linear.tgt !wf in
+      assert (Vector.Linear.src !wi = ni);
+      assert (Vector.Linear.src !wo = ni);
+      assert (Vector.Linear.src !wc = ni);
+      assert (Vector.Linear.tgt !wi = nh);
+      assert (Vector.Linear.tgt !wo = nh);
+      assert (Vector.Linear.tgt !wc = nh);
+      assert (Vector.Linear.src !uf = nh);
+      assert (Vector.Linear.src !ui = nh);
+      assert (Vector.Linear.src !uo = nh);
+      assert (Vector.Linear.src !uc = nh);
+      assert (Vector.Linear.tgt !uf = nh);
+      assert (Vector.Linear.tgt !ui = nh);
+      assert (Vector.Linear.tgt !uo = nh);
+      assert (Vector.Linear.tgt !uc = nh);
+      assert (Vector.dim !bf = nh);
+      assert (Vector.dim !bi = nh);
+      assert (Vector.dim !bo = nh);
+      assert (Vector.dim !bc = nh);
+      let wf = Linear.var wf in
+      let wi = Linear.var wi in
+      let wo = Linear.var wo in
+      let wc = Linear.var wc in
+      let uf = Linear.var uf in
+      let ui = Linear.var ui in
+      let uo = Linear.var uo in
+      let uc = Linear.var uc in
+      let bf = var bf in
+      let bi = var bi in
+      let bo = var bo in
+      let bc = var bc in
       (* Forget *)
       let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf h)) bf in
       (* Input *)
