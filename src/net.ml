@@ -159,6 +159,8 @@ module Vector = struct
 
   let dup x = unpair @@ diag x
 
+  let drop x = update (Vector.zero (Array.length (eval x))) x
+
   (** Add a constant. *)
   let cadd a = of_differentiable (Differentiable.Vector.cadd a)
 
