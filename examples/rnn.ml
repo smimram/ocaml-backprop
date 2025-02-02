@@ -4,12 +4,12 @@ open Backpropagatable.Vector
 let () = Random.self_init ()
 
 let () =
-  let m = 20 in
+  let m = 10 in
   let expected = List.init m (fun n -> Vector.scalar (sin (float (m-n-1)))) in
   (* let expected = List.init m (fun _ -> Vector.scalar 1.0) in *)
   let input = List.init m (fun _ -> Backpropagatable.cst [|1.0|]) in
   (* let error = List.init m (fun _ -> -0.01) in *)
-  let n = 12 in
+  let n = 8 in
   (* Elmann *)
   (* let activations = `Relu,`None in
   let weight = ref @@ Vector.Linear.uniform 1 n in
@@ -24,7 +24,7 @@ let () =
   let initial_output = ref @@ Vector.zero 1 in
   let net = rnn elman initial_state initial_output in *)
   (* Jordan *)
-  let activations = `Relu,`Relu,`None in
+  (* let activations = `Relu,`Relu,`None in
   let input_weight = ref @@ Vector.Linear.uniform 1 n in
   let output_weight = ref @@ Vector.Linear.uniform 1 n in
   let state_state = ref @@ Vector.Linear.uniform n n in
@@ -38,10 +38,36 @@ let () =
   let jordan = RNN_unit.jordan_unit ~activations ~input_weight ~output_weight ~state_weight ~bias in
   let initial_state = ref @@ Vector.zero n in
   let initial_output = ref @@ Vector.zero 1 in
-  let net = rnn jordan initial_state initial_output in
-  for _ = 0 to 10000 do
+  let net = rnn jordan initial_state initial_output in *)
+  (* LSTM *)
+  let wf = ref @@ Vector.Linear.uniform 1 n in
+  let wi = ref @@ Vector.Linear.uniform 1 n in
+  let wo = ref @@ Vector.Linear.uniform 1 n in
+  let wc = ref @@ Vector.Linear.uniform 1 n in
+  let weight = wf, wi, wo, wc in
+  let uf = ref @@ Vector.Linear.uniform n n in
+  let ui = ref @@ Vector.Linear.uniform n n in
+  let uo = ref @@ Vector.Linear.uniform n n in
+  let uc = ref @@ Vector.Linear.uniform n n in
+  let output_weight = uf, ui, uo, uc in
+  let biasf = ref @@ Vector.zero n in
+  let biasi = ref @@ Vector.zero n in
+  let biaso = ref @@ Vector.zero n in
+  let biasc = ref @@ Vector.zero n in
+  let bias = biasf, biasi, biaso, biasc in
+  let lstm = RNN_unit.lstm_unit ~weight ~output_weight ~bias in
+  let initial_state = ref @@ Vector.zero n in
+  let initial_output = ref @@ Vector.zero n in
+  let net = rnn lstm initial_state initial_output in
+  let output_layer = 
+    let weights = ref @@ Vector.Linear.uniform n 1 in
+    let bias = ref @@ Vector.zero 1 in
+    Backpropagatable.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
+  in
+  for _ = 0 to 1000 do
     input 
     |> net
+    |> List.map output_layer
     (* |> List.map (Backpropagatable.observe (fun x -> Printf.printf "value is %f\n%!" x.(0))) *)
     (* |> Backpropagatable.List.lift_error `Euclidean expected
     |> Backpropagatable.List.update error *)

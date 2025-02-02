@@ -242,18 +242,52 @@ module Vector = struct
     type nonrec t = Vector.t t -> Vector.t t -> Vector.t t -> (Vector.t t * Vector.t t)
 
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~weight ~state_weight ~bias = 
+    let gated_recurrent_unit ~weight ~output_weight ~bias = 
       fun x s y -> 
         let wz, wr, wh = weight in
-        let uz, ur, uh = state_weight in
+        let uz, ur, uh = output_weight in
         let bz, br, bh = bias in
         let xp = dup2 x 3 in
         let yp = dup2 y 4 in
-        let z = sigmoid @@ add (Linear.app wz xp) (add (Linear.app uz yp) bz) in
-        let r = sigmoid @@ add (Linear.app wr xp) (add (Linear.app ur yp) br) in
-        let h = tanh @@ add (Linear.app wh xp) (add (Linear.app uh (hadamard r yp)) bh) in
-        let y = add (hadamard (cadd 1. (cmul (-1.) z)) yp) (hadamard z h) in
+        let z = sigmoid @@ add (Linear.app (Linear.var wz) xp) (bias_fun bz (Linear.app (Linear.var uz) yp)) in
+        let zp = dup2 z 2 in
+        let r = sigmoid @@ add (Linear.app (Linear.var wr) xp) (bias_fun br (Linear.app (Linear.var ur) yp)) in
+        let h = tanh @@ add (Linear.app (Linear.var wh) xp) (bias_fun bh (Linear.app (Linear.var uh) (hadamard r yp))) in
+        let y = add (hadamard (cadd 1. (cmul (-1.) zp)) yp) (hadamard zp h) in
         s, y
+
+    let lstm_unit ~weight ~output_weight ~bias =
+      fun x s y ->
+        let wf, wi, wo, wc = weight in
+        let uf, ui, uo, uc = output_weight in
+        let bf, bi, bo, bc = bias in
+        let wf = Linear.var wf in
+        let wi = Linear.var wi in
+        let wo = Linear.var wo in
+        let wc = Linear.var wc in
+        let uf = Linear.var uf in
+        let ui = Linear.var ui in
+        let uo = Linear.var uo in
+        let uc = Linear.var uc in
+        let bf = var bf in
+        let bi = var bi in
+        let bo = var bo in
+        let bc = var bc in
+        (* let x = dup2 x 4 in
+        let y = dup2 y 4 in *)
+        (* Forget *)
+        let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf y)) bf in
+        (* Input *)
+        let i = sigmoid @@ add (add (Linear.app wi x) (Linear.app ui y)) bi in
+        (* Output *)
+        let o = sigmoid @@ add (add (Linear.app wo x) (Linear.app uo y)) bo in
+        (* Candidate cell state. *)
+        let c' = sigmoid @@ add (add (Linear.app wc x) (Linear.app uc y)) bc in
+        (* Cell state. *)
+        let c = add (hadamard f s) (hadamard i c') in
+        (* Hidden state. *)
+        let h = hadamard o (sigmoid c) in
+        c, h
 
     let elman_unit ~activations ~weight ~state_weight ~bias =
       let ah, ay = activations in
