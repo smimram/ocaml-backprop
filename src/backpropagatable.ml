@@ -28,6 +28,48 @@ let descent eta = climb (-.eta)
 let run (x : unit t) =
   snd x ()
 
+(** Unpair two values. *)
+let unpair (p : ('a * 'b) t) : 'a t * 'b t =
+  let x, y = eval p in
+  let dl = ref None in
+  let dr = ref None in
+  (* We only update when we have both values. *)
+  let update () =
+    match !dl, !dr with
+    | Some dl, Some dr -> update (dl, dr) p
+    | _ -> ()
+  in
+  let x = x, fun d -> dl := Some d; update () in
+  let y = y, fun d -> dr := Some d; update () in
+  x, y
+
+
+module Dup (E: sig type t val add : t -> t -> t val zero_init : t -> t end) =
+struct
+  (** Diagonal. *)
+  let diag (x : 'a t) : ('a * 'a) t =
+    let y = eval x in
+    (y, y), fun (d1,d2) -> update (E.add d1 d2) x
+
+  (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
+  let dup x = unpair @@ diag x
+
+  let fold_out f l s y =
+    let rec go (l: 'a list): ('b * 'c * ('c list)) =
+      match l with
+      | [] -> s, y, []
+      | x::l -> 
+        let s, y, ly = go l in
+        let s, yp = f x s y in
+        let yp1, yp2 = dup yp in
+        s, yp1, yp2::ly
+      in
+    let _, y, ly = go l in
+    update (E.zero_init @@ eval y) y;
+    ly
+
+end
+
 (** {2 Building blocks} *)
 
 (** A constant. *)
@@ -108,24 +150,10 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
   (eval x, eval y), fun (d1,d2) -> update d1 x; update d2 y
 
-(** Unpair two values. *)
-let unpair (p : ('a * 'b) t) : 'a t * 'b t =
-  let x, y = eval p in
-  let dl = ref None in
-  let dr = ref None in
-  (* We only update when we have both values. *)
-  let update () =
-    match !dl, !dr with
-    | Some dl, Some dr -> update (dl, dr) p
-    | _ -> ()
-  in
-  let x = x, fun d -> dl := Some d; update () in
-  let y = y, fun d -> dr := Some d; update () in
-  x, y
-
 (** Operations on vectors. *)
 module Vector = struct
   include VarMake(Vector)
+  include Dup(struct include Vector let zero_init v = zero @@ dim v end)
 
   (** Add a constant. *)
   let cadd a = of_differentiable (Differentiable.Vector.cadd a)
@@ -256,18 +284,6 @@ module Vector = struct
         st, yt
   end
 
-
-  let fold_out (f: 'a -> 'b -> 'c -> ('b * 'c)) (l: 'a list) (s: 'b) (y: 'c): 'c list =
-    let rec go (l: 'a list): ('b * 'c * ('c list)) =
-      match l with
-      | [] -> s, y, []
-      | x::l -> 
-        let s, y, ly = go l in
-        let s, yp = f x s y in
-        s, yp, yp::ly
-      in
-    let _, _, ly = go l in
-    ly
 
   (** Perform Backpropagation through time (kind of). *)
   let rnn (r:RNN_unit.t) s y l = fold_out r l (var s) (var y)

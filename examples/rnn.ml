@@ -4,11 +4,12 @@ open Backpropagatable.Vector
 let () = Random.self_init ()
 
 let () =
-  let m = 5 in
-  let expected = List.init m (fun n -> Vector.scalar (1.0 /. (float (m-n))**2.)) in
+  let m = 20 in
+  let expected = List.init m (fun n -> Vector.scalar (sin (float (m-n-1)))) in
+  (* let expected = List.init m (fun _ -> Vector.scalar 1.0) in *)
   let input = List.init m (fun _ -> Backpropagatable.cst [|1.0|]) in
   (* let error = List.init m (fun _ -> -0.01) in *)
-  let n = 8 in
+  let n = 12 in
   (* Elmann *)
   (* let activations = `Relu,`None in
   let weight = ref @@ Vector.Linear.uniform 1 n in
@@ -23,7 +24,7 @@ let () =
   let initial_output = ref @@ Vector.zero 1 in
   let net = rnn elman initial_state initial_output in *)
   (* Jordan *)
-  let activations = `Tanh,`Tanh,`None in
+  let activations = `Relu,`Relu,`None in
   let input_weight = ref @@ Vector.Linear.uniform 1 n in
   let output_weight = ref @@ Vector.Linear.uniform 1 n in
   let state_state = ref @@ Vector.Linear.uniform n n in
@@ -38,19 +39,20 @@ let () =
   let initial_state = ref @@ Vector.zero n in
   let initial_output = ref @@ Vector.zero 1 in
   let net = rnn jordan initial_state initial_output in
-  for _ = 0 to 1000 do
+  for _ = 0 to 10000 do
     input 
     |> net
     (* |> List.map (Backpropagatable.observe (fun x -> Printf.printf "value is %f\n%!" x.(0))) *)
     (* |> Backpropagatable.List.lift_error `Euclidean expected
     |> Backpropagatable.List.update error *)
     |> Backpropagatable.List.error `MSE expected
-    |> Backpropagatable.descent 0.005
+    |> Backpropagatable.descent 0.0001
     |> Backpropagatable.run
   done;
 
-  let k = 10 in
+  let k = 35 in
   let new_input = List.init k (fun _ -> Backpropagatable.cst [|1.0|]) in
-  let new_expected = List.init k (fun n -> (1.0 /. (float (k-n))**2.)) in
+  let new_expected = List.init k (fun n -> sin (float (k-n-1))) in
+  (* let new_expected = List.init k (fun _ -> 1.) in *)
   let pred = new_input |> net |> List.map (fun x -> (Backpropagatable.eval x).(0)) in
   List.iter2 (fun x -> Printf.printf "Value: %f, expected: %f\n" x) pred new_expected
