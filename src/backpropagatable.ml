@@ -54,6 +54,20 @@ struct
   (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
   let dup x = unpair @@ diag x
 
+  let dup2 (x : E.t t) (n : int): E.t t = 
+    let dr = ref @@ E.zero_init @@ eval x in
+    let counter = ref n in
+    let update d =
+      counter := !counter - 1;
+      if !counter < 0 then
+        ()
+      else
+        dr := E.add !dr d;
+      if !counter = 0 then
+        update !dr x;
+    in
+    eval x, update 
+
   let fold_out f l s y =
     let rec go (l: 'a list): ('b * 'c * ('c list)) =
       match l with
@@ -61,6 +75,8 @@ struct
       | x::l -> 
         let s, y, ly = go l in
         let s, yp = f x s y in
+        (* let yp = dup2 yp 2 in
+        s, yp, yp::ly *)
         let yp1, yp2 = dup yp in
         s, yp1, yp2::ly
       in
@@ -227,15 +243,17 @@ module Vector = struct
 
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
     let gated_recurrent_unit ~weight ~state_weight ~bias = 
-      fun x s _ -> 
+      fun x s y -> 
         let wz, wr, wh = weight in
         let uz, ur, uh = state_weight in
         let bz, br, bh = bias in
-        let z = sigmoid @@ add (Linear.app wz x) (add (Linear.app uz s) bz) in
-        let r = sigmoid @@ add (Linear.app wr x) (add (Linear.app ur s) br) in
-        let h = tanh @@ add (Linear.app wh x) (add (Linear.app uh (hadamard r s)) bh) in
-        let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
-        y, y
+        let xp = dup2 x 3 in
+        let yp = dup2 y 4 in
+        let z = sigmoid @@ add (Linear.app wz xp) (add (Linear.app uz yp) bz) in
+        let r = sigmoid @@ add (Linear.app wr xp) (add (Linear.app ur yp) br) in
+        let h = tanh @@ add (Linear.app wh xp) (add (Linear.app uh (hadamard r yp)) bh) in
+        let y = add (hadamard (cadd 1. (cmul (-1.) z)) yp) (hadamard z h) in
+        s, y
 
     let elman_unit ~activations ~weight ~state_weight ~bias =
       let ah, ay = activations in
