@@ -123,6 +123,20 @@ let diag (x : 'a t) : ('a * 'a) t =
 (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
 let dup x = unpair @@ diag x
 
+let dup2 x n = 
+  let dr = ref @@ Vector.zero @@ Vector.dim (eval x) in
+  let counter = ref n in
+  let update d =
+    counter := !counter - 1;
+    if !counter < 0 then
+      ()
+    else
+      dr := Vector.add !dr d;
+    if !counter = 0 then
+      update !dr x;
+  in
+  eval x, update 
+
 (** Values of this type are {i linear}. This operator must be used when a value is never used. *)
 let drop x = update 0. x
 
@@ -257,26 +271,6 @@ module Vector = struct
       let wf, wi, wo, wc = weight in
       let uf, ui, uo, uc = weight_state in
       let bf, bi, bo, bc = bias in
-      let ni = Vector.Linear.src !wf in
-      let nh = Vector.Linear.tgt !wf in
-      assert (Vector.Linear.src !wi = ni);
-      assert (Vector.Linear.src !wo = ni);
-      assert (Vector.Linear.src !wc = ni);
-      assert (Vector.Linear.tgt !wi = nh);
-      assert (Vector.Linear.tgt !wo = nh);
-      assert (Vector.Linear.tgt !wc = nh);
-      assert (Vector.Linear.src !uf = nh);
-      assert (Vector.Linear.src !ui = nh);
-      assert (Vector.Linear.src !uo = nh);
-      assert (Vector.Linear.src !uc = nh);
-      assert (Vector.Linear.tgt !uf = nh);
-      assert (Vector.Linear.tgt !ui = nh);
-      assert (Vector.Linear.tgt !uo = nh);
-      assert (Vector.Linear.tgt !uc = nh);
-      assert (Vector.dim !bf = nh);
-      assert (Vector.dim !bi = nh);
-      assert (Vector.dim !bo = nh);
-      assert (Vector.dim !bc = nh);
       let wf = Linear.var wf in
       let wi = Linear.var wi in
       let wo = Linear.var wo in
@@ -289,6 +283,8 @@ module Vector = struct
       let bi = var bi in
       let bo = var bo in
       let bc = var bc in
+      let x = dup2 x 4 in
+      let h = dup2 h 4 in
       (* Forget *)
       let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf h)) bf in
       (* Input *)
