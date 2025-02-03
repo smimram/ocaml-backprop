@@ -2,3 +2,5 @@
 _build
 .vscode/
 output.txt
+*.data
+*.data.old
