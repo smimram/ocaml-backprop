@@ -10,7 +10,7 @@ let () =
   let size = ref 20 in
   let hidden_size = ref 4 in
   let play = ref false in
-  let bulk = 2 (* 2048 *) in
+  let bulk = 16 (* 2048 *) in
   Arg.parse [
     "-i", Arg.Set_string source, "Input file.";
     "-s", Arg.Set_string source, "Source file.";

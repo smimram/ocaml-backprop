@@ -101,6 +101,7 @@ let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
   (eval x, eval y), fun (d1,d2) -> update d1 x; update d2 y
 
 (** Unpair two values. *)
+(* TODO: we should be able to implement this with dup and projections... *)
 let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   let x, y = eval p in
   let dl = ref None in
@@ -115,6 +116,7 @@ let unpair (p : ('a * 'b) t) : 'a t * 'b t =
   let y = y, fun d -> dr := Some d; update () in
   x, y
 
+(*
 (** Diagonal. *)
 let diag (x : 'a t) : ('a * 'a) t =
   let y = eval x in
@@ -122,20 +124,18 @@ let diag (x : 'a t) : ('a * 'a) t =
 
 (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
 let dup x = unpair @@ diag x
+*)
 
-let dup2 x n = 
-  let dr = ref @@ Vector.zero @@ Vector.dim (eval x) in
+let dup n x =
+  let dr = ref 0. in
   let counter = ref n in
   let update d =
-    counter := !counter - 1;
-    if !counter < 0 then
-      ()
-    else
-      dr := Vector.add !dr d;
-    if !counter = 0 then
-      update !dr x;
+    decr counter;
+    if !counter < 0 then ()
+    else dr := !dr +. d;
+    if !counter = 0 then update !dr x;
   in
-  eval x, update 
+  eval x, update
 
 (** Values of this type are {i linear}. This operator must be used when a value is never used. *)
 let drop x = update 0. x
@@ -166,12 +166,26 @@ end
 module Vector = struct
   include VarMake(Vector)
 
+  (*
   (* TODO: we could have a functor to share this definition with above *)
   let diag x : (Vector.t * Vector.t) t =
     let y = eval x in
     (y, y), fun (d1,d2) -> update (Vector.add d1 d2) x
 
   let dup x = unpair @@ diag x
+  *)
+
+  (** Make a value useable exactly n times. *)
+  let dup n x =
+    let dr = ref @@ Vector.zero @@ Vector.dim (eval x) in
+    let counter = ref n in
+    let update d =
+      decr counter;
+      if !counter < 0 then ()
+      else dr := Vector.add !dr d;
+      if !counter = 0 then update !dr x;
+    in
+    eval x, update
 
   (** Should be called when a vector is not used. *)
   let drop x = update (Vector.zero (Array.length (eval x))) x
@@ -262,7 +276,8 @@ module Vector = struct
       let r = sigmoid @@ add (add (Linear.app wr x) (Linear.app ur s)) br in
       let h = tanh @@ add (add (Linear.app wh x) (Linear.app uh (hadamard r s))) bh in
       let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
-      dup y
+      let y = dup 2 y in
+      y, y
 
     (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. In terms of dimensios, the state weights are from hidden to hidden, the weights are from inputs to hidden, and the bias are for hidden. *)
     let long_short_term_memory ~weight_state ~weight ~bias : (Vector.t * Vector.t, Vector.t, Vector.t) rnn =
@@ -303,8 +318,8 @@ module Vector = struct
       let bi = var bi in
       let bo = var bo in
       let bc = var bc in
-      let x = dup2 x 4 in
-      let h = dup2 h 4 in
+      let x = dup 4 x in
+      let h = dup 4 h in
       (* Forget *)
       let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf h)) bf in
       (* Input *)
@@ -317,9 +332,9 @@ module Vector = struct
       let c = add (hadamard f c) (hadamard i c') in
       (* Hidden state. *)
       let h = hadamard o (sigmoid c) in
-      let h1, h2 = dup h in
-      let ch = pair c h1 in
-      ch, h2
+      let h = dup 2 h in
+      let ch = pair c h in
+      ch, h
 
     (** Unfold an RNN so that updating is done after n steps. *)
     let unfold (f : (Vector.t, Vector.t, Vector.t) rnn) (s0 : Vector.t t) (x : Vector.t t list) =
