@@ -131,8 +131,8 @@ let dup n x =
   let counter = ref n in
   let update d =
     decr counter;
-    if !counter < 0 then ()
-    else dr := !dr +. d;
+    assert (!counter >= 0);
+    dr := !dr +. d;
     if !counter = 0 then update !dr x;
   in
   eval x, update
@@ -181,8 +181,8 @@ module Vector = struct
     let counter = ref n in
     let update d =
       decr counter;
-      if !counter < 0 then ()
-      else dr := Vector.add !dr d;
+      assert (!counter >= 0);
+      dr := Vector.add !dr d;
       if !counter = 0 then update !dr x;
     in
     eval x, update
