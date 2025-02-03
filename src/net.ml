@@ -235,6 +235,7 @@ module Vector = struct
     match kind with
     | `None -> Fun.id
     | `ReLU -> relu
+    | `Tanh -> tanh
     | `Sigmoid -> sigmoid
 
   let bias_fun = bias
@@ -272,7 +273,9 @@ module Vector = struct
       let bz = var bz in
       let br = var br in
       let bh = var bh in
-      let z = sigmoid @@ add (add (Linear.app wz x) (Linear.app uz s)) bz in
+      let x = dup 3 x in
+      let s = dup 4 s in
+      let z = dup 2 @@ sigmoid @@ add (add (Linear.app wz x) (Linear.app uz s)) bz in
       let r = sigmoid @@ add (add (Linear.app wr x) (Linear.app ur s)) br in
       let h = tanh @@ add (add (Linear.app wh x) (Linear.app uh (hadamard r s))) bh in
       let y = add (hadamard (cadd 1. (cmul (-1.) z)) s) (hadamard z h) in
