@@ -14,13 +14,14 @@ let load_labels fname =
   let len = input_int ic in
   Array.init len (fun _ -> input_byte ic)
 
-let load_images fname =
+let load_images ?limit fname =
   let ic = open_in fname in
   assert (input_byte ic = 0);
   assert (input_byte ic = 0);
   assert (input_byte ic = 8); (* kind is unsigned byte *)
   assert (input_byte ic = 3); (* dimension is 3 *)
   let len = input_int ic in
+  let len = match limit with Some limit -> min len limit | None -> len in
   let height = input_int ic in
   let width = input_int ic in
   Array.init len
