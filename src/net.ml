@@ -176,12 +176,12 @@ module Vector = struct
   *)
 
   (** Make a value useable exactly n times. *)
-  let dup n x =
+  let dup ?label n x =
     let dr = ref @@ Vector.zero @@ Vector.dim (eval x) in
     let counter = ref n in
     let update d =
       decr counter;
-      assert (!counter >= 0);
+      if !counter < 0 then failwith "dup %s used more than %d times" (Option.value ~default:"<unknown>" label) n;
       dr := Vector.add !dr d;
       if !counter = 0 then update !dr x;
     in
@@ -321,8 +321,8 @@ module Vector = struct
       let bi = var bi in
       let bo = var bo in
       let bc = var bc in
-      let x = dup 4 x in
-      let h = dup 4 h in
+      let x = dup ~label:"lstm x" 4 x in
+      let h = dup ~label:"lstm h" 4 h in
       (* Forget *)
       let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf h)) bf in
       (* Input *)
