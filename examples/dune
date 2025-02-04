@@ -26,7 +26,7 @@
  (modules lstm)
 )
 
-; (rule
- ; (alias runtest)
- ; (action (run ./lstm.exe))
-; )
+(rule
+ (alias runtest)
+ (action (run ./lstm.exe))
+)
