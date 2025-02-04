@@ -259,10 +259,10 @@ module Vector = struct
     type ('s, 'a, 'b) rnn = 's t -> 'a t -> 's t * 'b t
 
     (** {{:https://en.wikipedia.org/wiki/Gated_recurrent_unit}Gated recurrent unit} layer. The argument is the state and then the input. *)
-    let gated_recurrent_unit ~state_weight ~weight ~bias : (Vector.t, Vector.t, Vector.t) rnn =
+    let gated_recurrent_unit ~weight_state ~weight ~bias : (Vector.t, Vector.t, Vector.t) rnn =
       fun s x ->
       let wz, wr, wh = weight in
-      let uz, ur, uh = state_weight in
+      let uz, ur, uh = weight_state in
       let bz, br, bh = bias in
       let wz = Linear.var wz in
       let wr = Linear.var wr in

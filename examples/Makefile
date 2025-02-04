@@ -12,3 +12,6 @@ square:
 
 lstm:
 	@dune exec ./lstm.exe
+
+gru:
+	@dune exec ./gru.exe

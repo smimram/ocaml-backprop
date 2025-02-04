@@ -30,3 +30,14 @@
  (alias runtest)
  (action (run ./lstm.exe))
 )
+
+(executable
+ (name gru)
+ (libraries backprop)
+ (modules gru)
+)
+
+(rule
+ (alias runtest)
+ (action (run ./gru.exe))
+)
