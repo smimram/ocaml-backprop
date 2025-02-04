@@ -19,3 +19,14 @@
  (alias runtest)
  (action (run ./square.exe))
 )
+
+(executable
+ (name lstm)
+ (libraries backprop)
+ (modules lstm)
+)
+
+; (rule
+ ; (alias runtest)
+ ; (action (run ./lstm.exe))
+; )

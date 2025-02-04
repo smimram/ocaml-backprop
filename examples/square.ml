@@ -1,3 +1,5 @@
+(** Learn the square function with a simple net. *)
+
 open Backprop
 
 let () = Random.self_init ()
