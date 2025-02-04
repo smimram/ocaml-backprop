@@ -9,7 +9,7 @@ let () =
   let rate = ref 0.005 in
   let size = ref 20 in
   let hidden_size = ref 4 in
-  let bulk = 2048 (* 2048 *) in
+  let bulk = 64 (* 2048 *) in
   Arg.parse [
     "-i", Arg.Set_string source, "Input file.";
     "-s", Arg.Set_string source, "Source file.";
