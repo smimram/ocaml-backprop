@@ -332,7 +332,7 @@ module Vector = struct
       (* Candidate cell state. *)
       let c' = sigmoid @@ add (add (Linear.app wc x) (Linear.app uc h)) bc in
       (* Cell state. *)
-      let c = add (hadamard f c) (hadamard i c') in
+      let c = dup 2 @@ add (hadamard f c) (hadamard i c') in
       (* Hidden state. *)
       let h = hadamard o (sigmoid c) in
       let h = dup 2 h in
