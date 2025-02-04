@@ -1,4 +1,4 @@
-(** Basic LSTM example. *)
+(** Basic GRU example. *)
 
 open Backprop
 

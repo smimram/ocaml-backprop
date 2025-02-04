@@ -9,9 +9,3 @@ sine:
 
 square:
 	@dune exec ./square.exe
-
-lstm:
-	@dune exec ./lstm.exe
-
-gru:
-	@dune exec ./gru.exe

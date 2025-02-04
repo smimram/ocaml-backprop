@@ -1,21 +1,21 @@
 (executable
- (name sine)
+ (name lstm)
  (libraries backprop)
- (modules sine)
+ (modules lstm)
 )
 
 (rule
  (alias runtest)
- (action (run ./sine.exe))
+ (action (run ./lstm.exe))
 )
 
 (executable
- (name square)
+ (name gru)
  (libraries backprop)
- (modules square)
+ (modules gru)
 )
 
 (rule
  (alias runtest)
- (action (run ./square.exe))
+ (action (run ./gru.exe))
 )
