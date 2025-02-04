@@ -11,7 +11,7 @@ jobs:
       - name: Setup OCaml
         run: |
           sudo apt-get -y update
-          sudo apt-get -y install ocaml ocaml-dune ocaml-odoc libgraphics-ocaml-dev libx11-dev libpulse-ocaml-dev
+          sudo apt-get -y install ocaml ocaml-dune ocaml-odoc libgraphics-ocaml-dev libx11-dev
 
       - name: Build
         run: dune build
