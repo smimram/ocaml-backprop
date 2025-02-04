@@ -102,6 +102,17 @@ module Vector = struct
   let hadamard : (Vector.t * Vector.t, Vector.t) t =
     fun (x, y) -> Vector.hadamard x y, fun d -> Vector.hadamard d y, Vector.hadamard d x
 
+  (*
+  let softmax : (Vector.t, Vector.t) t =
+    fun x ->
+    let s = Vector.softmax x in
+    s, fun d ->
+      let h = Vector.hadamard s d in
+      let b = Vector.sum h in
+      Vector.sub h
+      si di - sum j si sj dj
+  *)
+
   (** Squared norm of a vector. *)
   let squared_norm : (Vector.t, float) t =
     fun x -> Vector.squared_norm x, fun d -> Vector.cmul (2. *. d) x
