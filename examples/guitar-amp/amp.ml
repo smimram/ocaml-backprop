@@ -9,8 +9,7 @@ let () =
   let rate = ref 0.005 in
   let size = ref 20 in
   let hidden_size = ref 4 in
-  let play = ref false in
-  let bulk = 16 (* 2048 *) in
+  let bulk = 2048 (* 2048 *) in
   Arg.parse [
     "-i", Arg.Set_string source, "Input file.";
     "-s", Arg.Set_string source, "Source file.";
@@ -19,8 +18,6 @@ let () =
     "-r", Arg.Set_float rate, "Learning rate.";
     "--rate", Arg.Set_float rate, "Learning rate.";
     "--size", Arg.Set_int size, "Size of the network.";
-    "-p", Arg.Set play, "Play processed data on soundcard.";
-    "--play", Arg.Set play, "Play processed data on soundcard.";
   ] (fun s -> source := s) "learn [options]";
   if !source = "" then error "Please specify an input file.";
   let source = WAV.openfile !source in
@@ -55,7 +52,7 @@ let () =
       print_endline "Learning mode.";
       Random.self_init ();
       let target = WAV.openfile !target in
-      let output = Output.create ~channels:1 ~samplerate ~filename:!output ~soundcard:!play () in
+      let output = WAV.Writer.openfile ~channels:1 ~samplerate !output in
       let state = ref (Net.state !hidden_size) in
       let net = Net.net !hidden_size in
       try
@@ -71,7 +68,7 @@ let () =
           let y = WAV.samples_float target bulk |> Array.map (fun x -> x.(0)) in
           let s', y' = net ~optimize:opt ~state:!state ~rate:!rate y x in
           state := s';
-          Output.samples output y';
+          WAV.Writer.samples_float output y';
           Printf.printf "\rProcessing: %d samples%!" (!i * bulk)
         done;
       with

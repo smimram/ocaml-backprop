@@ -1,4 +1,4 @@
 (executable
  (public_name amp)
- (libraries pulseaudio backprop)
+ (libraries backprop)
 )

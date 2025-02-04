@@ -15,11 +15,6 @@ The first component is the result, and the second component is a continuation sp
 
 An important remark is that _nets are linear_ which means that they should be used only once. If you want to use a value exactly $n$ times, you should explicitly by using the `dup n` function.
 
-## Requirements
-
-- [PulseAudio](https://www.freedesktop.org/wiki/Software/PulseAudio/)
-- [ocaml-pulseaudio](https://github.com/savonet/ocaml-pulseaudio) for the guitar-amp example
-
 ## See also
 
 Articles:
