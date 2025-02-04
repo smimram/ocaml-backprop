@@ -321,8 +321,8 @@ module Vector = struct
       let bi = var bi in
       let bo = var bo in
       let bc = var bc in
-      let x = dup ~label:"lstm x" 4 x in
-      let h = dup ~label:"lstm h" 4 h in
+      let x = dup ~label:"lstm_x" 4 x in
+      let h = dup ~label:"lstm_h" 4 h in
       (* Forget *)
       let f = sigmoid @@ add (add (Linear.app wf x) (Linear.app uf h)) bf in
       (* Input *)
