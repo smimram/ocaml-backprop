@@ -49,16 +49,16 @@ let unit i =
   a.(i) <- 1.;
   a
 
-let string_array_to_array_array_array size =
-  Array.map 
-  (fun s -> 
-    Array.init size (fun n -> unit @@ char_to_index s.[n]))
+let string_array_to_array_array_array size1 size2 =
+  Array.map2 
+  (fun s1 s2 -> 
+    Array.init size1 (fun n -> unit @@ char_to_index s1.[n]),
+    Array.init size2 (fun n -> unit @@ char_to_index s2.[n])
+    )
 
 let generate_data dataset_size sequence_length max_num =
   let x,max_x,y,max_y = generate_string_data dataset_size sequence_length max_num in
-  let x = string_array_to_array_array_array max_x x in
-  let y = string_array_to_array_array_array max_y y in
-  x,y
+  string_array_to_array_array_array max_x max_y x y 
 
 
   
