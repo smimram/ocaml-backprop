@@ -27,6 +27,9 @@ module Derivable = struct
 
   (** The sine function. *)
   let sin : t = sin , cos
+
+  (** The log function. *)
+  let log : t = log, fun x -> (log @@ exp 1.) /. x
 end
 
 (** A differentiable function. Given an input x, such a function f returns the output f(x), and the function which given the variation in the output provides the variation in the input. *)
@@ -63,6 +66,9 @@ let square = of_derivable Derivable.square
 
 (** The sine function. *)
 let sin = of_derivable Derivable.sin
+
+(** The log function. *)
+let log = of_derivable Derivable.log
 
 (*
 (** Functions operating on pairs. *)
@@ -101,6 +107,16 @@ module Vector = struct
   (** Hadamrd product of two vectors. *)
   let hadamard : (Vector.t * Vector.t, Vector.t) t =
     fun (x, y) -> Vector.hadamard x y, fun d -> Vector.hadamard d y, Vector.hadamard d x
+
+  (** Sum. *)
+  let sum : (Vector.t, float) t = 
+    fun x ->
+      Vector.sum x , fun d -> Vector.init (Vector.dim x) (fun _ -> d)
+
+  (** Dot product. *)
+  let dot : (Vector.t * Vector.t, float) t = 
+    fun (x,y) ->
+      Vector.dot x y, fun d -> Vector.cmul d y, Vector.cmul d x
 
   (*
   let softmax : (Vector.t, Vector.t) t =
@@ -142,4 +158,7 @@ module Vector = struct
 
   (** Pointwise rectified linear unit. *)
   let relu = map relu
+
+  (** Pointwise log. *)
+  let log = map log
 end

@@ -87,8 +87,14 @@ let relu = of_differentiable Differentiable.relu
 (** Sine. *)
 let sin = of_differentiable Differentiable.sin
 
+(** Log. *)
+let log = of_differentiable Differentiable.log
+
 (** Square. *)
 let square = of_differentiable Differentiable.square
+
+(** Softmax *)
+let softmax = of_differentiable Differentiable.Vector.softmax
 
 (** Fold a function over a series of inputs. *)
 let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
@@ -99,7 +105,7 @@ let rec fold (f : 'a -> 'b t -> 'b t) (l : 'a Seq.t) (s : 'b t) : 'b t =
 (** Pair two values. *)
 let pair (x : 'a t) (y : 'b t) : ('a * 'b) t =
   (eval x, eval y), fun (d1,d2) -> update d1 x; update d2 y
-
+   
 (** Unpair two values. *)
 (* TODO: we should be able to implement this with dup and projections... *)
 let unpair (p : ('a * 'b) t) : 'a t * 'b t =
@@ -125,6 +131,7 @@ let diag (x : 'a t) : ('a * 'a) t =
 (** Values of this type are {i linear}. This operator must be used in order to use a value twice. *)
 let dup x = unpair @@ diag x
 *)
+
 
 let dup n x =
   let dr = ref 0. in
@@ -190,6 +197,23 @@ module Vector = struct
   (** Should be called when a vector is not used. *)
   let drop x = update (Vector.zero (Array.length (eval x))) x
 
+  (** Make n explicit copies of x *)
+  let repeat n x =
+    let x = dup n x in
+    Array.make n x
+
+  let demux p =
+    let x = eval p in
+    let n = Array.length x in
+    let k = ref 0 in
+    let dd = Array.make n (Vector.zero n) in
+    let update () =
+      incr k;
+      assert (!k <= n);
+      if !k = n then (update dd p)
+    in
+    Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
+
   (** Drop a pair of vectors. *)
   let drop_pair x =
     let v1, v2 = eval x in
@@ -230,6 +254,19 @@ module Vector = struct
 
   (** Rectified linear unit. *)
   let relu = of_differentiable Differentiable.Vector.relu
+
+  (** Log. *)
+  let log = of_differentiable Differentiable.Vector.log
+
+  (** Dot *)
+  let dot y x = of_differentiable Differentiable.Vector.dot @@ pair y x
+
+  (** Sum *)
+  let sum x = of_differentiable Differentiable.Vector.sum x
+
+  (** Cross-entropy *)
+  let crossentropy y x =
+    x |> log |> cmul (-. 1.) |> dot (cst y) 
 
   let activation kind =
     match kind with
@@ -347,6 +384,13 @@ module Vector = struct
     (** Apply RNN in bulk mode, to an array of input values at once. *)
     let bulk (f : ('s, 'a, 'b) rnn) (s0 : 's t) (x : 'a t array) =
       x |> Array.fold_left_map f s0 |> Pair.map_right mux
+
+    (** Same as above, but only the state is kept. *)
+    let bulk_state (f : ('s, 'a, 'b) rnn) (s0 : 's t) (x : 'a t array) =
+      x 
+      |> Array.fold_left_map f s0 
+      |> Pair.map_right @@ Array.map drop 
+      |> fst
   end
 
   (*
