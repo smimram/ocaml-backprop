@@ -15,8 +15,9 @@ let () =
   let width = Array.length img.(0) in
   Printf.printf "image size: %d * %d\n%!" width height;
 
+  let scale = 10 in
   Graphics.open_graph "";
-  Graphics.resize_window width height;
+  Graphics.resize_window (scale*width) (scale*height);
   for n = 0 to limit - 1 do
     let img = images.(n) in
     for i = 0 to width - 1 do
@@ -24,7 +25,7 @@ let () =
         let c = img.(height - 1 - j).(i) in
         let c = Graphics.rgb c c c in
         Graphics.set_color c;
-        Graphics.plot i j
+        Graphics.fill_rect (scale*i) (scale*j) scale scale
       done
     done;
   done;
