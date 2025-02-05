@@ -1,3 +1,7 @@
+(** The MNIST dataset. *)
+
+(* See for instance https://nextjournal.com/gkoehler/pytorch-mnist *)
+
 let () =
   let limit = 1000 in
   print_endline "Welcome to MNIST.";

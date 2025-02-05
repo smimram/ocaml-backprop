@@ -282,7 +282,7 @@ module Vector = struct
       let y = dup 2 y in
       y, y
 
-    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. In terms of dimensios, the state weights are from hidden to hidden, the weights are from inputs to hidden, and the bias are for hidden. *)
+    (** {{:https://en.wikipedia.org/wiki/Long_short-term_memory}Long short-term memory} or LSTM layer. In terms of dimensions, the state weights are from hidden to hidden, the weights are from inputs to hidden, and the bias are for hidden. *)
     let long_short_term_memory ~weight_state ~weight ~bias : (Vector.t * Vector.t, Vector.t, Vector.t) rnn =
       fun ch x ->
       let c, h = unpair ch in
@@ -348,4 +348,24 @@ module Vector = struct
     let bulk (f : ('s, 'a, 'b) rnn) (s0 : 's t) (x : 'a t array) =
       x |> Array.fold_left_map f s0 |> Pair.map_right mux
   end
+
+  (*
+  module Image = struct
+    (** Convolution network. The kernel is a 4-dimensional matrix whose dimensions are input, output, height, width. *)
+    (* See https://medium.com/towards-data-science/conv2d-to-finally-understand-what-happens-in-the-forward-pass-1bbaafb0b148 *)
+    let convolution kernel =
+      let inputs = Array.length kernel in
+      let outputs = Array.length kernel.(0) in
+      let kernel_height = Array.length kernel.(0).(0) in
+      let kernel_width = Array.length kernel.(0).(0).(0) in
+      fun x ->
+        let xm = eval x in
+        let height = Array.length xm in
+        let width = Array.length xm.(0) in
+        Array.init outputs
+          (fun output ->
+             
+          )
+  end
+  *)
 end
