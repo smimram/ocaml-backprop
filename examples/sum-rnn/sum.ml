@@ -8,9 +8,9 @@ let () =
   let max_num = 100 in
   Random.self_init ();
   let data = Data.generate_data dataset_size sequence_length max_num in
-  let batch_size = 128 in
-  let hidden_size = 128 in
-  let learning_rate = 0.001 in
+  let batch_size = 32 in
+  let hidden_size = 32 in
+  let learning_rate = 0.01 in
   let state1 = state hidden_size in
   let state2 = state hidden_size in
   let net = net hidden_size Data.vocabulary_size 
@@ -64,8 +64,8 @@ let () =
   let res = 
     input
     |> Array.map cst
-    |> net 
-    |> Array.map eval in
+    |> net in
+  let pred = res |> Array.map eval in
   Printf.printf "Input:\n";
   Array.iter 
     (fun x -> 
@@ -80,4 +80,11 @@ let () =
   Array.iter 
     (fun x -> 
       Printf.printf "%s\n" @@ Backprop.Vector.to_string x) 
-    res;
+    pred;
+  let loss =
+    res
+    |> Array.map2 Vector.crossentropy expected
+    |> mux 
+    |> Vector.sum 
+    |> eval in
+  Printf.printf "Loss: %f" loss

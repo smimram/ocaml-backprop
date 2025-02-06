@@ -29,7 +29,7 @@ module Derivable = struct
   let sin : t = sin , cos
 
   (** The log function. *)
-  let log : t = log, fun x -> (log @@ exp 1.) /. x
+  let log : t = log10, fun x -> (log10 @@ exp 1.) /. x
 end
 
 (** A differentiable function. Given an input x, such a function f returns the output f(x), and the function which given the variation in the output provides the variation in the input. *)

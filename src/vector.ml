@@ -41,7 +41,7 @@ let sub (x:t) (y:t) : t = Array.map2 (-.) x y
 let sum (x:t) = Array.fold_left (+.) 0. x
 
 (** Dot product. *)
-let dot (x:t) (y:t) = sum @@ map2 (+.) x y
+let dot (x:t) (y:t) = sum @@ map2 ( *.) x y
 
 (** Square of the euclidean norm. *)
 let squared_norm (x:t) = Array.fold_left (fun s x -> s +. x *. x) 0. x

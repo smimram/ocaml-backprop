@@ -38,7 +38,7 @@ let generate_string_data dataset_size sequence_length max_num =
       done;
       pad max_size_x !s
       ) x in
-  let max_size_y = int_lenght max_num*sequence_length in
+  let max_size_y = int_lenght (max_num*sequence_length) in
   let y = Array.map 
       (fun x ->
         pad max_size_y @@ string_of_int x
