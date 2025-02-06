@@ -107,6 +107,11 @@ module Matrix = struct
     assert (tgt a = tgt b);
     { rows = a.rows; cols = a.cols; vector = add a.vector b.vector }
 
+  let sub a b =
+    assert (src a = src b);
+    assert (tgt a = tgt b);
+    { rows = a.rows; cols = a.cols; vector = sub a.vector b.vector }
+
   let cmul x a =
     { rows = a.rows; cols = a.cols; vector = cmul x a.vector }
 

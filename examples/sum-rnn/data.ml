@@ -1,5 +1,15 @@
 let vocabulary_size = 12
 
+(** Fischer-Yates shuffle*)
+let shuffle arr =
+  let n = Array.length arr in
+  for i = n - 1 downto 1 do
+    let j = Random.int (i + 1) in
+    let temp = arr.(i) in
+    arr.(i) <- arr.(j);
+    arr.(j) <- temp
+  done
+
 let generate_sums dataset_size sequence_length max_num =
   
   let x = Array.init dataset_size

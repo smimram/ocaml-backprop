@@ -386,7 +386,7 @@ module Vector = struct
       x |> Array.fold_left_map f s0 |> Pair.map_right mux
 
     (** Same as above, but only the state is kept. *)
-    let bulk_state (f : ('s, 'a, 'b) rnn) (s0 : 's t) (x : 'a t array) =
+    let bulk_state (f : ('s, 'a, Vector.t) rnn) (s0 : 's t) (x : 'a t array) =
       x 
       |> Array.fold_left_map f s0 
       |> Pair.map_right @@ Array.map drop 

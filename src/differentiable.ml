@@ -111,7 +111,7 @@ module Vector = struct
   (** Sum. *)
   let sum : (Vector.t, float) t = 
     fun x ->
-      Vector.sum x , fun d -> Vector.init (Vector.dim x) (fun _ -> d)
+      Vector.sum x , fun d -> Vector.fill (Vector.dim x) d
 
   (** Dot product. *)
   let dot : (Vector.t * Vector.t, float) t = 
@@ -140,8 +140,20 @@ module Vector = struct
     Vector.squared_norm diff, fun d -> Vector.cmul (2. *. d) diff
   
   (** Softmax function. *)
+  (* There should be an optimisation when composed with crossentropy*)
   let softmax : (Vector.t, Vector.t) t =
-    fun x -> Vector.softmax x, fun _d -> failwith "TODO"
+    fun x -> (
+      let s = Vector.softmax x in
+      let n = Vector.dim x in
+      let jac = Vector.Matrix.init n n 
+        (fun i j ->
+          if i = j then
+            s.(i)*.(1.-.s.(i))
+          else
+            -. s.(i)*.s.(j)
+          ) in
+      s,
+      fun d -> Vector.Matrix.app jac d)
 
   (** Pointwise application of a differentiable function. *)
   let map (f : (float, float) t) : (Vector.t, Vector.t) t =
