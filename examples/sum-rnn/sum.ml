@@ -83,7 +83,7 @@ let () =
     pred;
   let loss =
     res
-    |> Array.map2 Vector.crossentropy expected
+    |> Array.map2 Vector.cross_entropy expected
     |> mux 
     |> Vector.sum 
     |> eval in
