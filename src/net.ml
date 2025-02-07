@@ -265,7 +265,7 @@ module Vector = struct
   let sum x = of_differentiable Differentiable.Vector.sum x
 
   (** Cross-entropy *)
-  let crossentropy y x =
+  let cross_entropy y x =
     x |> log |> cmul (-. 1.) |> dot (cst y) 
 
   let activation kind =
@@ -401,7 +401,7 @@ module Vector = struct
     (*
     (** Convolution network. The kernel is a 4-dimensional matrix whose dimensions are input, output, height, width. *)
     (* See https://medium.com/towards-data-science/conv2d-to-finally-understand-what-happens-in-the-forward-pass-1bbaafb0b148 *)
-    let convolution kernel =
+    let convolutions kernel =
       let inputs = Array.length kernel in
       let outputs = Array.length kernel.(0) in
       let kernel_height = Array.length kernel.(0).(0) in
@@ -412,10 +412,6 @@ module Vector = struct
         let width = Array.length xm.(0) in
         Array.init outputs
           (fun output ->
-             Array.init (height-kernel_height+1) (fun j ->
-                 Array.init (width-kernel_width+1) (fun i ->
-                   )
-               )
           )
        *)
   end

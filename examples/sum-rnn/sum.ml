@@ -39,7 +39,7 @@ let () =
         res
         |> Array.map2 
           (fun y x ->
-            Array.map2 Vector.crossentropy y x
+            Array.map2 Vector.cross_entropy y x
             )
           expected
         |> Array.map mux 
