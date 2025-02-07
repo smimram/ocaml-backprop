@@ -173,4 +173,47 @@ module Vector = struct
 
   (** Pointwise log. *)
   let log = map log
+
+  module Matrix = struct
+    (** Convolve the second matrix by the first one (supposed to be smaller). *)
+    let convolution : (Vector.Matrix.t * Vector.Matrix.t, Vector.Matrix.t) t =
+      fun (k,x) ->
+        Vector.Matrix.init
+          (Vector.Matrix.rows x + 1 - Vector.Matrix.rows k)
+          (Vector.Matrix.cols x + 1 - Vector.Matrix.cols k)
+          (fun j i ->
+             let z = ref 0. in
+             for j' = 0 to Vector.Matrix.rows k - 1 do
+               for i' = 0 to Vector.Matrix.cols k - 1 do
+                 z := !z +. Vector.Matrix.get k j' i' *. Vector.Matrix.get x (j+j') (i+i')
+               done
+             done;
+             !z
+          ), fun d ->
+          let dk =
+            Vector.Matrix.init (Vector.Matrix.rows k) (Vector.Matrix.cols k)
+              (fun j' i' ->
+                 let z = ref 0. in
+                 for j = 0 to Vector.Matrix.rows x - j' - 1 do
+                   for i = 0 to Vector.Matrix.cols x - i' - 1 do
+                     z := !z +. Vector.Matrix.get x (j+j') (i+i') *. Vector.Matrix.get d j i
+                   done
+                 done;
+                 !z
+              )
+          in
+          let dx =
+            Vector.Matrix.init (Vector.Matrix.rows x) (Vector.Matrix.cols x)
+              (fun q p ->
+                 let z = ref 0. in
+                 for j = 0 to min q (Vector.Matrix.rows x - 1) do
+                   for i = 0 to min p (Vector.Matrix.cols x - 1) do
+                     z := !z +. Vector.Matrix.get k (q-j) (p-i) *. Vector.Matrix.get d j i
+                   done
+                 done;
+                 !z
+              )
+          in
+          dk, dx
+  end
 end
