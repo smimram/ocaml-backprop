@@ -110,13 +110,11 @@ module Vector = struct
 
   (** Sum. *)
   let sum : (Vector.t, float) t = 
-    fun x ->
-      Vector.sum x , fun d -> Vector.fill (Vector.dim x) d
+    fun x -> Vector.sum x, fun d -> Vector.fill (Vector.dim x) d
 
   (** Dot product. *)
   let dot : (Vector.t * Vector.t, float) t = 
-    fun (x,y) ->
-      Vector.dot x y, fun d -> Vector.cmul d y, Vector.cmul d x
+    fun (x,y) -> Vector.dot x y, fun d -> Vector.cmul d y, Vector.cmul d x
 
   (*
   let softmax : (Vector.t, Vector.t) t =
