@@ -171,47 +171,47 @@ module Vector = struct
 
   (** Pointwise log. *)
   let log = map log
+end
 
-  module Matrix = struct
-    (** Convolve the second matrix by the first one (supposed to be smaller). *)
-    let convolution : (Matrix.t * Matrix.t, Matrix.t) t =
-      fun (k,x) ->
-        Matrix.init
-          (Matrix.rows x + 1 - Matrix.rows k)
-          (Matrix.cols x + 1 - Matrix.cols k)
-          (fun j i ->
-             let z = ref 0. in
-             for j' = 0 to Matrix.rows k - 1 do
-               for i' = 0 to Matrix.cols k - 1 do
-                 z := !z +. Matrix.get k j' i' *. Matrix.get x (j+j') (i+i')
-               done
-             done;
-             !z
-          ), fun d ->
-          let dk =
-            Matrix.init (Matrix.rows k) (Matrix.cols k)
-              (fun j' i' ->
-                 let z = ref 0. in
-                 for j = 0 to Matrix.rows x - j' - 1 do
-                   for i = 0 to Matrix.cols x - i' - 1 do
-                     z := !z +. Matrix.get x (j+j') (i+i') *. Matrix.get d j i
-                   done
-                 done;
-                 !z
-              )
-          in
-          let dx =
-            Matrix.init (Matrix.rows x) (Matrix.cols x)
-              (fun q p ->
-                 let z = ref 0. in
-                 for j = 0 to min q (Matrix.rows x - 1) do
-                   for i = 0 to min p (Matrix.cols x - 1) do
-                     z := !z +. Matrix.get k (q-j) (p-i) *. Matrix.get d j i
-                   done
-                 done;
-                 !z
-              )
-          in
-          dk, dx
-  end
+module Matrix = struct
+  (** Convolve the second matrix by the first one (supposed to be smaller). *)
+  let convolution : (Matrix.t * Matrix.t, Matrix.t) t =
+    fun (k,x) ->
+      Matrix.init
+        (Matrix.rows x + 1 - Matrix.rows k)
+        (Matrix.cols x + 1 - Matrix.cols k)
+        (fun j i ->
+           let z = ref 0. in
+           for j' = 0 to Matrix.rows k - 1 do
+             for i' = 0 to Matrix.cols k - 1 do
+               z := !z +. Matrix.get k j' i' *. Matrix.get x (j+j') (i+i')
+             done
+           done;
+           !z
+        ), fun d ->
+        let dk =
+          Matrix.init (Matrix.rows k) (Matrix.cols k)
+            (fun j' i' ->
+               let z = ref 0. in
+               for j = 0 to Matrix.rows x - j' - 1 do
+                 for i = 0 to Matrix.cols x - i' - 1 do
+                   z := !z +. Matrix.get x (j+j') (i+i') *. Matrix.get d j i
+                 done
+               done;
+               !z
+            )
+        in
+        let dx =
+          Matrix.init (Matrix.rows x) (Matrix.cols x)
+            (fun q p ->
+               let z = ref 0. in
+               for j = 0 to min q (Matrix.rows x - 1) do
+                 for i = 0 to min p (Matrix.cols x - 1) do
+                   z := !z +. Matrix.get k (q-j) (p-i) *. Matrix.get d j i
+                 done
+               done;
+               !z
+            )
+        in
+        dk, dx
 end

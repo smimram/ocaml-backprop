@@ -426,7 +426,7 @@ module Vector = struct
 
     (* Simple convolution network (one input and one output channels). Kernel dimensions are height and width. *)
     let convolution k x =
-      of_differentiable Differentiable.Vector.Matrix.convolution @@ pair k x
+      of_differentiable Differentiable.Matrix.convolution @@ pair k x
 
     (** Convolution network. The kernel is a 4-dimensional matrix whose dimensions are input, output, height, width. *)
     (* See https://medium.com/towards-data-science/conv2d-to-finally-understand-what-happens-in-the-forward-pass-1bbaafb0b148 *)
