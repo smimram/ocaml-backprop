@@ -393,54 +393,54 @@ module Vector = struct
       |> Pair.map_right @@ Array.map drop 
       |> fst
   end
+end
 
-  module Matrix = struct
-    include VarMake(Matrix)
+module Matrix = struct
+  include VarMake(Matrix)
 
-    (* TODO: we should really make a generic module instead of duplicating dup code *)
-    let dup ?label n x =
-      let dr =
-        let x = eval x in
-        ref @@ Matrix.zero (Matrix.rows x) (Matrix.cols x)
-      in
-      let counter = ref n in
-      let update d =
-        decr counter;
-        if !counter < 0 then failwith "dup %s used more than %d times" (Option.value ~default:"<unknown>" label) n;
-        dr := Matrix.add !dr d;
-        if !counter = 0 then update !dr x;
-      in
-      eval x, update
+  (* TODO: we should really make a generic module instead of duplicating dup code *)
+  let dup ?label n x =
+    let dr =
+      let x = eval x in
+      ref @@ Matrix.zero (Matrix.rows x) (Matrix.cols x)
+    in
+    let counter = ref n in
+    let update d =
+      decr counter;
+      if !counter < 0 then failwith "dup %s used more than %d times" (Option.value ~default:"<unknown>" label) n;
+      dr := Matrix.add !dr d;
+      if !counter = 0 then update !dr x;
+    in
+    eval x, update
 
-    let demux (p : Matrix.t array t) =
-      let x = eval p in
-      let n = Array.length x in
-      let k = ref 0 in
-      let dd = Array.make n (Matrix.zero (Matrix.rows x.(0)) (Matrix.cols x.(0))) in
-      let update () =
-        incr k;
-        assert (!k <= n);
-        if !k = n then (update dd p)
-      in
-      Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
+  let demux (p : Matrix.t array t) =
+    let x = eval p in
+    let n = Array.length x in
+    let k = ref 0 in
+    let dd = Array.make n (Matrix.zero (Matrix.rows x.(0)) (Matrix.cols x.(0))) in
+    let update () =
+      incr k;
+      assert (!k <= n);
+      if !k = n then (update dd p)
+    in
+    Array.mapi (fun i x -> x, (fun d -> dd.(i) <- d; update ())) x
 
-    (* Simple convolution network (one input and one output channels). Kernel dimensions are height and width. *)
-    let convolution k x =
-      of_differentiable Differentiable.Matrix.convolution @@ pair k x
+  (* Simple convolution network (one input and one output channels). Kernel dimensions are height and width. *)
+  let convolution k x =
+    of_differentiable Differentiable.Matrix.convolution @@ pair k x
 
-    (** Convolution network. The kernel is a 4-dimensional matrix whose dimensions are input, output, height, width. *)
-    (* See https://medium.com/towards-data-science/conv2d-to-finally-understand-what-happens-in-the-forward-pass-1bbaafb0b148 *)
-    let convolutions kernel =
-      let inputs = Array.length kernel in
-      let outputs = Array.length kernel.(0) in
-      let kernel = Array.map (fun k -> Array.map (fun k -> var k) k) kernel in
-      fun x ->
-        let x = demux x |> Array.map (dup outputs) in
-        Array.init outputs
-          (fun output ->
-             List.init inputs (fun input ->
-                 convolution kernel.(input).(output) x.(input)
-               ) (* TODO: sum this list *)
-          )
-  end
+  (** Convolution network. The kernel is a 4-dimensional matrix whose dimensions are input, output, height, width. *)
+  (* See https://medium.com/towards-data-science/conv2d-to-finally-understand-what-happens-in-the-forward-pass-1bbaafb0b148 *)
+  let convolutions kernel =
+    let inputs = Array.length kernel in
+    let outputs = Array.length kernel.(0) in
+    let kernel = Array.map (fun k -> Array.map (fun k -> var k) k) kernel in
+    fun x ->
+      let x = demux x |> Array.map (dup outputs) in
+      Array.init outputs
+        (fun output ->
+           List.init inputs (fun input ->
+               convolution kernel.(input).(output) x.(input)
+             ) (* TODO: sum this list *)
+        )
 end
