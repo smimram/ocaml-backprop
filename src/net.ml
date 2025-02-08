@@ -1,6 +1,7 @@
 (** Networks consist of backpropagatable functions. *)
 
 open Extlib
+open Algebra
 
 (** The backpropagation "functor": it consists of the result of the evaluation (the primal) and a function to perform the backpropagation given the gradient. *)
 type 'a t = 'a * ('a -> unit)
@@ -164,7 +165,7 @@ let demux (p : 'a array t) : 'a t array =
 
 (** Linear transformations. *)
 module Linear = struct
-  include VarMake (Vector.Linear)
+  include VarMake(Linear)
 
   let app f x = of_differentiable Differentiable.Linear.app @@ pair f x
 end
@@ -285,7 +286,7 @@ module Vector = struct
       match bias with
       | None -> x
       | Some bias ->
-        assert (Vector.dim !bias = Vector.Linear.tgt !weights);
+        assert (Vector.dim !bias = Algebra.Linear.tgt !weights);
         bias_fun bias x
     in
     activation_fun activation x
@@ -326,22 +327,22 @@ module Vector = struct
       let wf, wi, wo, wc = weight in
       let uf, ui, uo, uc = weight_state in
       let bf, bi, bo, bc = bias in
-      let ni = Vector.Linear.src !wf in
-      let nh = Vector.Linear.tgt !wf in
-      assert (Vector.Linear.src !wi = ni);
-      assert (Vector.Linear.src !wo = ni);
-      assert (Vector.Linear.src !wc = ni);
-      assert (Vector.Linear.tgt !wi = nh);
-      assert (Vector.Linear.tgt !wo = nh);
-      assert (Vector.Linear.tgt !wc = nh);
-      assert (Vector.Linear.src !uf = nh);
-      assert (Vector.Linear.src !ui = nh);
-      assert (Vector.Linear.src !uo = nh);
-      assert (Vector.Linear.src !uc = nh);
-      assert (Vector.Linear.tgt !uf = nh);
-      assert (Vector.Linear.tgt !ui = nh);
-      assert (Vector.Linear.tgt !uo = nh);
-      assert (Vector.Linear.tgt !uc = nh);
+      let ni = Algebra.Linear.src !wf in
+      let nh = Algebra.Linear.tgt !wf in
+      assert (Algebra.Linear.src !wi = ni);
+      assert (Algebra.Linear.src !wo = ni);
+      assert (Algebra.Linear.src !wc = ni);
+      assert (Algebra.Linear.tgt !wi = nh);
+      assert (Algebra.Linear.tgt !wo = nh);
+      assert (Algebra.Linear.tgt !wc = nh);
+      assert (Algebra.Linear.src !uf = nh);
+      assert (Algebra.Linear.src !ui = nh);
+      assert (Algebra.Linear.src !uo = nh);
+      assert (Algebra.Linear.src !uc = nh);
+      assert (Algebra.Linear.tgt !uf = nh);
+      assert (Algebra.Linear.tgt !ui = nh);
+      assert (Algebra.Linear.tgt !uo = nh);
+      assert (Algebra.Linear.tgt !uc = nh);
       assert (Vector.dim !bf = nh);
       assert (Vector.dim !bi = nh);
       assert (Vector.dim !bo = nh);
@@ -394,28 +395,28 @@ module Vector = struct
   end
 
   module Matrix = struct
-    include VarMake (Vector.Matrix)
+    include VarMake(Matrix)
 
     (* TODO: we should really make a generic module instead of duplicating dup code *)
     let dup ?label n x =
       let dr =
         let x = eval x in
-        ref @@ Vector.Matrix.zero (Vector.Matrix.rows x) (Vector.Matrix.cols x)
+        ref @@ Matrix.zero (Matrix.rows x) (Matrix.cols x)
       in
       let counter = ref n in
       let update d =
         decr counter;
         if !counter < 0 then failwith "dup %s used more than %d times" (Option.value ~default:"<unknown>" label) n;
-        dr := Vector.Matrix.add !dr d;
+        dr := Matrix.add !dr d;
         if !counter = 0 then update !dr x;
       in
       eval x, update
 
-    let demux (p : Vector.Matrix.t array t) =
+    let demux (p : Matrix.t array t) =
       let x = eval p in
       let n = Array.length x in
       let k = ref 0 in
-      let dd = Array.make n (Vector.Matrix.zero (Vector.Matrix.rows x.(0)) (Vector.Matrix.cols x.(0))) in
+      let dd = Array.make n (Matrix.zero (Matrix.rows x.(0)) (Matrix.cols x.(0))) in
       let update () =
         incr k;
         assert (!k <= n);

@@ -1,5 +1,6 @@
 open Backprop
 open Extlib
+open Algebra
 
 let inputs = 1 (* 2 for stereo *)
 
@@ -9,16 +10,16 @@ let state hidden_size =
 
 let net hidden_size =
   let weight_state =
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size
   in
   let weight =
-    ref @@ Vector.Linear.uniform inputs hidden_size,
-    ref @@ Vector.Linear.uniform inputs hidden_size,
-    ref @@ Vector.Linear.uniform inputs hidden_size,
-    ref @@ Vector.Linear.uniform inputs hidden_size
+    ref @@ Linear.uniform inputs hidden_size,
+    ref @@ Linear.uniform inputs hidden_size,
+    ref @@ Linear.uniform inputs hidden_size,
+    ref @@ Linear.uniform inputs hidden_size
   in
   let bias =
     ref @@ Vector.zero hidden_size,
@@ -28,7 +29,7 @@ let net hidden_size =
   in
   (* Fully connected layer. *)
   let fc =
-    let w = ref @@ Vector.Linear.uniform hidden_size 1 in
+    let w = ref @@ Linear.uniform hidden_size 1 in
     let b = ref @@ Vector.zero 1 in
     fun x ->
       Net.Vector.to_scalar @@ Net.Vector.add (Net.Vector.var b) (Net.Linear.app (Net.Linear.var w) x)

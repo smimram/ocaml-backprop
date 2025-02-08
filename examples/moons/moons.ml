@@ -1,4 +1,5 @@
 open Backprop
+open Algebra
 
 (** Number of samples per moon. *)
 let samples = 200
@@ -49,34 +50,34 @@ let net =
   match activation with
   | `Sigmoid ->
     let layer1 =
-      let weights = ref @@ Vector.Linear.uniform 2 16 in
+      let weights = ref @@ Linear.uniform 2 16 in
       let bias = ref @@ Vector.zero 16 in
       Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
     in
     let layer2 =
-      let weights = ref @@ Vector.Linear.uniform 16 16 in
+      let weights = ref @@ Linear.uniform 16 16 in
       let bias = ref @@ Vector.zero 16 in
       Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
     in
     let layer3 =
-      let weights = ref @@ Vector.Linear.uniform 16 1 in
+      let weights = ref @@ Linear.uniform 16 1 in
       let bias = ref @@ Vector.zero 1 in
       Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
     in
     fun x -> Vector.pair x |> Net.cst |> layer1 |> layer2 |> layer3
   | `ReLU ->
     let layer1 =
-      let weights = ref @@ Vector.Linear.uniform 2 16 in
+      let weights = ref @@ Linear.uniform 2 16 in
       let bias = ref @@ Vector.fill 16 0. in
       Net.Vector.neural_network ~activation:`ReLU ~weights ~bias
     in
     let layer2 =
-      let weights = ref @@ Vector.Linear.uniform 16 16 in
+      let weights = ref @@ Linear.uniform 16 16 in
       let bias = ref @@ Vector.fill 16 0. in
       Net.Vector.neural_network ~activation:`ReLU ~weights ~bias
     in
     let layer3 =
-      let weights = ref @@ Vector.Linear.uniform 16 1 in
+      let weights = ref @@ Linear.uniform 16 1 in
       let bias = ref @@ Vector.fill 1 0. in
       Net.Vector.neural_network ~activation:`ReLU ~weights ~bias
     in

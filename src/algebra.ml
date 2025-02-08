@@ -1,85 +1,95 @@
+(** The sigmoid activation function. *)
+let sigmoid x = 1. /. (1. +. (exp (-.x)))
+
+(** Rectified linear unit. *)
+let relu x = max 0. x
+
+(** Step function. *)
+let step x = if x <= 0. then 0. else 1.
+
 (** Vectors. *)
+module Vector = struct
+  (** A vector. *)
+  type t = float array
 
-(** A vector. *)
-type t = float array
+  (** String representation of a vector. *)
+  let to_string (x:t) =
+    x
+    |> Array.to_list
+    |> List.map string_of_float
+    |> String.concat ", "
+    |> fun s -> "["^s^"]"
 
-(** String representation of a vector. *)
-let to_string (x:t) =
-  x
-  |> Array.to_list
-  |> List.map string_of_float
-  |> String.concat ", "
-  |> fun s -> "["^s^"]"
+  let of_list l : t =
+    Array.of_list l
 
-let of_list l : t =
-  Array.of_list l
+  (** Dimension. *)
+  let dim (x:t) = Array.length x
 
-(** Dimension. *)
-let dim (x:t) = Array.length x
+  let scalar x : t = [|x|]
 
-let scalar x : t = [|x|]
+  let pair (x,y) : t = [|x;y|]
 
-let pair (x,y) : t = [|x;y|]
+  let to_scalar (x:t) =
+    if dim x <> 1 then failwith (Printf.sprintf "to_scalar: vector of dimension %d instead of 1" (dim x));
+    x.(0)
 
-let to_scalar (x:t) =
-  if dim x <> 1 then failwith (Printf.sprintf "to_scalar: vector of dimension %d instead of 1" (dim x));
-  x.(0)
+  let map f (x:t) : t = Array.map f x
 
-let map f (x:t) : t = Array.map f x
+  let mapi f (x:t) : t = Array.mapi f x
 
-let mapi f (x:t) : t = Array.mapi f x
+  let map2 f (x:t) (y:t) : t = Array.map2 f x y
 
-let map2 f (x:t) (y:t) : t = Array.map2 f x y
+  (** Addition. *)
+  let add (x:t) (y:t) : t = Array.map2 (+.) x y
 
-(** Addition. *)
-let add (x:t) (y:t) : t = Array.map2 (+.) x y
+  (** Subtraction. *)
+  let sub (x:t) (y:t) : t = Array.map2 (-.) x y
 
-(** Subtraction. *)
-let sub (x:t) (y:t) : t = Array.map2 (-.) x y
+  (** Sum of the entries of the vector. *)
+  let sum (x:t) = Array.fold_left (+.) 0. x
 
-(** Sum of the entries of the vector. *)
-let sum (x:t) = Array.fold_left (+.) 0. x
+  (** Dot product. *)
+  let dot (x:t) (y:t) = sum @@ map2 ( *.) x y
 
-(** Dot product. *)
-let dot (x:t) (y:t) = sum @@ map2 ( *.) x y
+  (** Square of the euclidean norm. *)
+  let squared_norm (x:t) = Array.fold_left (fun s x -> s +. x *. x) 0. x
 
-(** Square of the euclidean norm. *)
-let squared_norm (x:t) = Array.fold_left (fun s x -> s +. x *. x) 0. x
+  (** Add a constant. *)
+  let cadd a x = map (fun x -> a +. x) x
 
-(** Add a constant. *)
-let cadd a x = map (fun x -> a +. x) x
+  (** Multiply by a constant. *)
+  let cmul a x = map (fun x -> a *. x) x
 
-(** Multiply by a constant. *)
-let cmul a x = map (fun x -> a *. x) x
+  let hadamard x y = map2 ( *. ) x y
 
-let hadamard x y = map2 ( *. ) x y
+  let init n f : t = Array.init n f
 
-let init n f : t = Array.init n f
+  let fill n x : t = Array.init n (fun _ -> x)
 
-let fill n x : t = Array.init n (fun _ -> x)
+  let zero n = fill n 0.
 
-let zero n = fill n 0.
+  (** Create a uniformly distributed random vector. *)
+  let uniform ?(min= -1.) ?(max=1.) n =
+    let d = max -. min in
+    init n (fun _ -> Random.float d +. min)
 
-(** Create a uniformly distributed random vector. *)
-let uniform ?(min= -1.) ?(max=1.) n =
-  let d = max -. min in
-  init n (fun _ -> Random.float d +. min)
+  let copy (x:t) : t = Array.copy x
 
-let copy (x:t) : t = Array.copy x
+  (** Maximum entry of a vector. *)
+  let max (x:t) =
+    Array.fold_left max (-. infinity) x
 
-(** Maximum entry of a vector. *)
-let max (x:t) =
-  Array.fold_left max (-. infinity) x
-
-(** Softmax of a vector (useful to convert logits to probabilities). *)
-let softmax (x:t) : t =
-  let x =
-    (* Improve numerical stability. *)
-    let m = max x in
-    map (fun x -> x -. m) x
-  in
-  let s = map exp x |> sum in
-  map (fun x -> exp x /. s) x
+  (** Softmax of a vector (useful to convert logits to probabilities). *)
+  let softmax (x:t) : t =
+    let x =
+      (* Improve numerical stability. *)
+      let m = max x in
+      map (fun x -> x -. m) x
+    in
+    let s = map exp x |> sum in
+    map (fun x -> exp x /. s) x
+end
 
 (** Operations on matrices. *)
 module Matrix = struct
@@ -88,7 +98,7 @@ module Matrix = struct
     {
       rows : int; (** Number of rows. *)
       cols : int; (** Number of columns. *)
-      vector : t; (** Underlying vector. *)
+      vector : Vector.t; (** Underlying vector. *)
     }
 
   let cols a = a.cols
@@ -105,7 +115,7 @@ module Matrix = struct
   let add a b =
     assert (src a = src b);
     assert (tgt a = tgt b);
-    { rows = a.rows; cols = a.cols; vector = add a.vector b.vector }
+    { rows = a.rows; cols = a.cols; vector = Vector.add a.vector b.vector }
 
   let add_list = function
     | [] -> assert false
@@ -115,17 +125,17 @@ module Matrix = struct
   let sub a b =
     assert (src a = src b);
     assert (tgt a = tgt b);
-    { rows = a.rows; cols = a.cols; vector = sub a.vector b.vector }
+    { rows = a.rows; cols = a.cols; vector = Vector.sub a.vector b.vector }
 
   let cmul x a =
-    { rows = a.rows; cols = a.cols; vector = cmul x a.vector }
+    { rows = a.rows; cols = a.cols; vector = Vector.cmul x a.vector }
 
   (** Apply a matrix to a vector. *)
   let app a x =
     let m = src a in
     let n = tgt a in
-    assert (m = dim x);
-    init n
+    assert (m = Vector.dim x);
+    Vector.init n
       (fun j ->
          let s = ref 0. in
          for i = 0 to m - 1 do
@@ -136,7 +146,7 @@ module Matrix = struct
   (** Initialize a matrix. *)
   let init rows cols f =
     (* TODO: more efficient / imperative *)
-    let vector = init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
+    let vector = Vector.init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
     { rows; cols; vector }
 
   (** Zero matrix. *)
@@ -160,7 +170,7 @@ module Matrix = struct
     {
       rows = a.rows;
       cols = a.cols;
-      vector = map f a.vector;
+      vector = Vector.map f a.vector;
     }
 
   let mapi f a =
@@ -174,7 +184,7 @@ module Matrix = struct
     {
       rows = a.rows;
       cols = a.cols;
-      vector = map2 f a.vector b.vector;
+      vector = Vector.map2 f a.vector b.vector;
     }
 end
 

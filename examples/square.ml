@@ -1,6 +1,7 @@
 (** Learn the square function with a simple net. *)
 
 open Backprop
+open Algebra
 
 let () = Random.self_init ()
 
@@ -12,12 +13,12 @@ let () =
   (* Train a network with one hidden layer of size 6. *)
   let n = 6 in
   let layer1 =
-    let weights = ref @@ Vector.Linear.uniform 1 n in
+    let weights = ref @@ Linear.uniform 1 n in
     let bias = ref @@ Vector.zero n in
     Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in
   let layer2 =
-    let weights = ref @@ Vector.Linear.uniform n 1 in
+    let weights = ref @@ Linear.uniform n 1 in
     let bias = ref @@ Vector.zero 1 in
     Net.Vector.neural_network ~activation:`Sigmoid ~weights ~bias
   in

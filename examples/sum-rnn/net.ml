@@ -1,5 +1,6 @@
 open Backprop
 open Extlib
+open Algebra
 
 let inputs = 1 (* 2 for stereo *)
 
@@ -9,16 +10,16 @@ let state hidden_size =
 
 let net hidden_size vocabulary_size output_size =
   let weight_state =
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size
   in
   let weight =
-    ref @@ Vector.Linear.uniform vocabulary_size hidden_size,
-    ref @@ Vector.Linear.uniform vocabulary_size hidden_size,
-    ref @@ Vector.Linear.uniform vocabulary_size hidden_size,
-    ref @@ Vector.Linear.uniform vocabulary_size hidden_size
+    ref @@ Linear.uniform vocabulary_size hidden_size,
+    ref @@ Linear.uniform vocabulary_size hidden_size,
+    ref @@ Linear.uniform vocabulary_size hidden_size,
+    ref @@ Linear.uniform vocabulary_size hidden_size
   in
   let bias =
     ref @@ Vector.zero hidden_size,
@@ -32,16 +33,16 @@ let net hidden_size vocabulary_size output_size =
     |> Net.Vector.RNN.bulk_state
   in
   let weight_state =
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size
   in
   let weight =
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size
   in
   let bias =
     ref @@ Vector.zero hidden_size,
@@ -53,7 +54,7 @@ let net hidden_size vocabulary_size output_size =
     Net.Vector.RNN.long_short_term_memory ~weight_state ~weight ~bias
     |> Net.Vector.RNN.bulk
   in
-  let weights = ref @@ Vector.Linear.uniform hidden_size vocabulary_size in
+  let weights = ref @@ Linear.uniform hidden_size vocabulary_size in
   let bias = ref @@ Vector.zero vocabulary_size in
   let layer3 = Net.Vector.neural_network ~activation:`None ~weights:weights ~bias:bias in
   fun (*~rate*) ~state1 ~state2 (*y*) x ->

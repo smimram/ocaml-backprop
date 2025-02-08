@@ -1,6 +1,6 @@
 (** Differentiable functions. *)
 
-open Extlib
+open Algebra
 
 (** Derivable functions. *)
 module Derivable = struct
@@ -83,8 +83,8 @@ end
 
 module Linear = struct
   (** Apply a linear function to a vector. *)
-  let app : (Vector.Matrix.t * Vector.t, Vector.t) t =
-    fun (m, x) -> Vector.Linear.app m x, fun d -> Vector.Linear.mapi (fun i j _ -> x.(i) *. d.(j)) m, Vector.Matrix.tapp m d
+  let app : (Matrix.t * Vector.t, Vector.t) t =
+    fun (m, x) -> Linear.app m x, fun d -> Linear.mapi (fun i j _ -> x.(i) *. d.(j)) m, Matrix.tapp m d
 end
 
 (** Functions operating on vectors. *)
@@ -143,7 +143,7 @@ module Vector = struct
     fun x -> (
       let s = Vector.softmax x in
       let n = Vector.dim x in
-      let jac = Vector.Matrix.init n n 
+      let jac = Matrix.init n n
         (fun i j ->
           if i = j then
             s.(i)*.(1.-.s.(i))
@@ -151,7 +151,7 @@ module Vector = struct
             -. s.(i)*.s.(j)
           ) in
       s,
-      fun d -> Vector.Matrix.app jac d)
+      fun d -> Matrix.app jac d)
 
   (** Pointwise application of a differentiable function. *)
   let map (f : (float, float) t) : (Vector.t, Vector.t) t =
@@ -174,39 +174,39 @@ module Vector = struct
 
   module Matrix = struct
     (** Convolve the second matrix by the first one (supposed to be smaller). *)
-    let convolution : (Vector.Matrix.t * Vector.Matrix.t, Vector.Matrix.t) t =
+    let convolution : (Matrix.t * Matrix.t, Matrix.t) t =
       fun (k,x) ->
-        Vector.Matrix.init
-          (Vector.Matrix.rows x + 1 - Vector.Matrix.rows k)
-          (Vector.Matrix.cols x + 1 - Vector.Matrix.cols k)
+        Matrix.init
+          (Matrix.rows x + 1 - Matrix.rows k)
+          (Matrix.cols x + 1 - Matrix.cols k)
           (fun j i ->
              let z = ref 0. in
-             for j' = 0 to Vector.Matrix.rows k - 1 do
-               for i' = 0 to Vector.Matrix.cols k - 1 do
-                 z := !z +. Vector.Matrix.get k j' i' *. Vector.Matrix.get x (j+j') (i+i')
+             for j' = 0 to Matrix.rows k - 1 do
+               for i' = 0 to Matrix.cols k - 1 do
+                 z := !z +. Matrix.get k j' i' *. Matrix.get x (j+j') (i+i')
                done
              done;
              !z
           ), fun d ->
           let dk =
-            Vector.Matrix.init (Vector.Matrix.rows k) (Vector.Matrix.cols k)
+            Matrix.init (Matrix.rows k) (Matrix.cols k)
               (fun j' i' ->
                  let z = ref 0. in
-                 for j = 0 to Vector.Matrix.rows x - j' - 1 do
-                   for i = 0 to Vector.Matrix.cols x - i' - 1 do
-                     z := !z +. Vector.Matrix.get x (j+j') (i+i') *. Vector.Matrix.get d j i
+                 for j = 0 to Matrix.rows x - j' - 1 do
+                   for i = 0 to Matrix.cols x - i' - 1 do
+                     z := !z +. Matrix.get x (j+j') (i+i') *. Matrix.get d j i
                    done
                  done;
                  !z
               )
           in
           let dx =
-            Vector.Matrix.init (Vector.Matrix.rows x) (Vector.Matrix.cols x)
+            Matrix.init (Matrix.rows x) (Matrix.cols x)
               (fun q p ->
                  let z = ref 0. in
-                 for j = 0 to min q (Vector.Matrix.rows x - 1) do
-                   for i = 0 to min p (Vector.Matrix.cols x - 1) do
-                     z := !z +. Vector.Matrix.get k (q-j) (p-i) *. Vector.Matrix.get d j i
+                 for j = 0 to min q (Matrix.rows x - 1) do
+                   for i = 0 to min p (Matrix.cols x - 1) do
+                     z := !z +. Matrix.get k (q-j) (p-i) *. Matrix.get d j i
                    done
                  done;
                  !z

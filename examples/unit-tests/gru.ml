@@ -1,6 +1,7 @@
 (** Basic GRU example. *)
 
 open Backprop
+open Algebra
 
 let () =
   Printexc.record_backtrace true;
@@ -10,14 +11,14 @@ let () =
   let inputs = 4 in
   let hidden_size = 8 in
   let weight_state =
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size,
-    ref @@ Vector.Linear.uniform hidden_size hidden_size
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size,
+    ref @@ Linear.uniform hidden_size hidden_size
   in
   let weight =
-    ref @@ Vector.Linear.uniform inputs hidden_size,
-    ref @@ Vector.Linear.uniform inputs hidden_size,
-    ref @@ Vector.Linear.uniform inputs hidden_size
+    ref @@ Linear.uniform inputs hidden_size,
+    ref @@ Linear.uniform inputs hidden_size,
+    ref @@ Linear.uniform inputs hidden_size
   in
   let bias =
     ref @@ Vector.zero hidden_size,

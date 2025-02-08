@@ -69,17 +69,17 @@ let () =
   Printf.printf "Input:\n";
   Array.iter 
     (fun x -> 
-      Printf.printf "%s\n" @@ Backprop.Vector.to_string x) 
+      Printf.printf "%s\n" @@ Backprop.Algebra.Vector.to_string x)
     input;
   Printf.printf "Expected:\n";
   Array.iter 
     (fun x -> 
-      Printf.printf "%s\n" @@ Backprop.Vector.to_string x) 
+      Printf.printf "%s\n" @@ Backprop.Algebra.Vector.to_string x)
     expected;
   Printf.printf "Probability:\n";
   Array.iter 
     (fun x -> 
-      Printf.printf "%s\n" @@ Backprop.Vector.to_string x) 
+      Printf.printf "%s\n" @@ Backprop.Algebra.Vector.to_string x)
     pred;
   let loss =
     res
