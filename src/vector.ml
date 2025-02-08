@@ -107,6 +107,11 @@ module Matrix = struct
     assert (tgt a = tgt b);
     { rows = a.rows; cols = a.cols; vector = add a.vector b.vector }
 
+  let add_list = function
+    | [] -> assert false
+    | [x] -> x
+    | x::l -> List.fold_left add x l
+
   let sub a b =
     assert (src a = src b);
     assert (tgt a = tgt b);
@@ -133,6 +138,10 @@ module Matrix = struct
     (* TODO: more efficient / imperative *)
     let vector = init (rows * cols) (fun k -> f (k / cols) (k mod cols)) in
     { rows; cols; vector }
+
+  (** Zero matrix. *)
+  let zero rows cols =
+    init rows cols (fun _ _ -> 0.)
 
   (** Random matrix. *)
   let uniform ?(min=(-1.)) ?(max=1.) rows cols =
