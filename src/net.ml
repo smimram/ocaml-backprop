@@ -436,6 +436,12 @@ module Matrix = struct
     let outputs = Array.length kernel.(0) in
     let kernel = Array.map (fun k -> Array.map (fun k -> var k) k) kernel in
     fun x ->
+      (*
+      let x = dup outputs x in
+      Array.init outputs (fun output ->
+          x |> 
+        )
+      *)
       let x = demux x |> Array.map (dup outputs) in
       Array.init outputs
         (fun output ->
